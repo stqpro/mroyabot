@@ -27,3 +27,19 @@ def get_directions():
         [directions.append(x) for x in list(map(lambda p: get_direction_name(c['name'], p), c['cities']))]
 
     return directions
+
+
+def get_trips(date: str, city_1: str, city_2: str):
+    response = requests.get('https://znami.by/trips.get', params={'date': date, 'city_1': city_1, 'city_2': city_2})
+
+    if response.status_code != 200:
+        logger.error('Unable to get cities data.')
+        return None
+
+    trips_data = response.json()
+
+    if trips_data['status'] != 'ok':
+        logger.error('Error while getting cities info.')
+        return None
+
+    return trips_data['trips']

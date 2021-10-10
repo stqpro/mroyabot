@@ -2,14 +2,14 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from app.utils.data_requests import get_directions
-from app.utils.date_strings import generate_date_keyboard
+from app.utils.data_requests import get_directions, get_trips
+from app.utils.date_strings import *
 
 
 class TripSearch(StatesGroup):
-    waiting_for_direction = State()
-    waiting_for_date = State()
-    waiting_for_time = State()
+    direction = State()
+    date = State()
+    time = State()
 
 
 async def trip_search_start(message: types.Message):
@@ -43,13 +43,56 @@ async def trip_search_direction_chosen(message: types.Message, state: FSMContext
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=1,
                                          input_field_placeholder='Дата поездки')
     keyboard.row('сегодня', 'завтра')
-    keyboard.add(*generate_date_keyboard()[2:], 'Назад')
+    keyboard.add(*generate_date_strings(offset=2, length=13), 'Назад')
 
     await state.update_data(departure=departure, destination=destination)
     await TripSearch.next()
     await message.answer('Выбери дату поездки.', reply_markup=keyboard)
 
 
+async def trip_search_date_chosen(message: types.Message, state: FSMContext):
+    if message.text.lower() == 'назад':
+        data = await state.get_data()
+        data.pop('departure')
+        data.pop('destination')
+        await state.set_data(data)
+
+        await trip_search_start(message)
+        return
+
+    parsed_date = parse_date_string(message.text.lower())
+
+    if parsed_date is None:
+        return
+
+    user_data = await state.get_data()
+
+    trips = get_trips(parsed_date, user_data['departure'], user_data['destination'])
+
+    if trips is None:
+        await message.answer('<b>Ошибка.</b> Не удалось загрузить список рейсов.')
+        return
+
+    if len(trips) == 0:
+        await message.answer('В выбранный день рейсы не найдены.')
+        return
+
+    merged_trips = {}
+
+    for t in trips:
+        merged_trips.setdefault(t['time'], 0)
+        merged_trips[t['time']] += t['free_places']
+
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=3)
+    keyboard.add(*[f"{key} ({value})" for key, value in merged_trips.items()], 'Назад')
+
+    await state.update_data(date=parsed_date)
+    await TripSearch.next()
+    await message.answer('Выбери время поездки.\n<em>В скобках указано количество свободных мест.</em>',
+                         reply_markup=keyboard)
+
+
 def register_handlers_trip_search(dp: Dispatcher):
     dp.register_message_handler(trip_search_start, commands="find", state='*')
-    dp.register_message_handler(trip_search_direction_chosen, state=TripSearch.waiting_for_direction)
+    dp.register_message_handler(trip_search_direction_chosen, state=TripSearch.direction)
+    dp.register_message_handler(trip_search_date_chosen, state=TripSearch.date)
