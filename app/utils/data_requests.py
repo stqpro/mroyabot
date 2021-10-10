@@ -1,6 +1,7 @@
+import logging
 import requests
 
-from bot import logger
+logger = logging.getLogger(__name__)
 
 
 def get_direction_name(city_1, city_2):
