@@ -29,7 +29,7 @@ def get_directions():
     return directions
 
 
-def get_trips(date: str, city_1: str, city_2: str):
+def get_trips(date: str, city_1: str, city_2: str, time=None):
     response = requests.get('https://znami.by/trips.get', params={'date': date, 'city_1': city_1, 'city_2': city_2})
 
     if response.status_code != 200:
@@ -42,4 +42,7 @@ def get_trips(date: str, city_1: str, city_2: str):
         logger.error('Error while getting cities info.')
         return None
 
-    return trips_data['trips']
+    if time is None:
+        return trips_data['trips']
+
+    return list(filter(lambda x: x['time'] == time, trips_data['trips']))
