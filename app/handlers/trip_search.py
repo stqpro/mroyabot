@@ -3,9 +3,13 @@ import re
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils.callback_data import CallbackData
 
 from app.utils.data_requests import get_directions, get_trips
 from app.utils.date_strings import *
+from app.messages.formatter import parse_trips_info
+
+trip_cb = CallbackData('trip', 'action', 'id', 'places')
 
 
 class TripSearch(StatesGroup):
@@ -21,8 +25,7 @@ async def trip_search_start(message: types.Message):
         await message.answer('<b>Ошибка.</b> Не удалось загрузить список доступных маршрутов.')
         return
 
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2,
-                                         input_field_placeholder='Выбор маршрута')
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, input_field_placeholder='Выбор маршрута')
     keyboard.add(*directions)
 
     await TripSearch.direction.set()
@@ -33,7 +36,7 @@ async def trip_search_direction_chosen(message: types.Message, state: FSMContext
     directions = get_directions()
 
     if message.text not in directions:
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2,
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2,
                                              input_field_placeholder='Выбор маршрута')
         keyboard.add(*directions)
 
@@ -42,8 +45,7 @@ async def trip_search_direction_chosen(message: types.Message, state: FSMContext
 
     departure, destination = message.text.split(" – ", maxsplit=1)
 
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=1,
-                                         input_field_placeholder='Дата поездки')
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1, input_field_placeholder='Дата поездки')
     keyboard.row('сегодня', 'завтра')
     keyboard.add(*generate_date_strings(offset=2, length=13), 'Назад')
 
@@ -85,9 +87,8 @@ async def trip_search_date_chosen(message: types.Message, state: FSMContext):
         merged_trips.setdefault(t['time'], 0)
         merged_trips[t['time']] += t['free_places']
 
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True, row_width=2,
-                                         input_field_placeholder='Время поездки')
-    keyboard.add(*[f"{key} ({value})" for key, value in merged_trips.items()], 'Назад')
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2, input_field_placeholder='Время поездки')
+    keyboard.add(*[f"{key} (мест: {value})" for key, value in merged_trips.items()], 'Назад')
 
     await state.update_data(date=parsed_date)
     await TripSearch.time.set()
@@ -113,7 +114,29 @@ async def trip_search_time_chosen(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
     trips = get_trips(user_data['date'], user_data['departure'], user_data['destination'], parsed_time)
 
-    print(trips)
+    if len(trips) == 0:
+        await message.answer('На выбранное время рейсы не найдены.')
+        return
+
+    answer_data = parse_trips_info(trips, f"{user_data['departure']} – {user_data['destination']}")
+
+    for msg in answer_data:
+        keyboard = types.InlineKeyboardMarkup()
+
+        if msg['places'] < 4:
+            keyboard.row(types.InlineKeyboardButton('Отслеживать', callback_data=trip_cb.new(action='follow',
+                                                                                             places=msg['places'],
+                                                                                             id=msg['id'])),
+                         types.InlineKeyboardButton('Резерв', callback_data=trip_cb.new(action='follow',
+                                                                                        places=msg['places'],
+                                                                                        id=msg['id'])))
+
+        if msg['places'] > 0:
+            keyboard.row(types.InlineKeyboardButton('Забронировать', callback_data=trip_cb.new(action='booking',
+                                                                                               places=msg['places'],
+                                                                                               id=msg['id'])))
+
+        await message.answer(msg['message'], reply_markup=keyboard)
 
 
 def register_handlers_trip_search(dp: Dispatcher):
