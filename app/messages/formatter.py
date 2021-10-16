@@ -37,8 +37,6 @@ def parse_trips_info(trips: List[Dict], direction: str) -> List[Dict]:
     message = f"<b>Маршрут:</b> {direction}\n\n" \
               f"<b>Дата:</b> {reformat_date(trips[0]['date'])}\n" \
               f"<b>Время:</b> {trips[0]['time']}\n\n" \
-              f"<b>Стоимость проезда:</b>\n- взрослый: {trips[0]['price']} BYN\n" \
-              f"- детский: {trips[0]['kids_price']} BYN\n\n"
 
     if len(trips) > 1 and trips[0]['car'] is None:
         message += f"<b>Рейсов:</b> {len(trips)}\n" \

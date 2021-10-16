@@ -8,17 +8,19 @@ from aiogram.utils.callback_data import CallbackData
 from app.utils.data_requests import get_directions, get_trips
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
+from app.utils.actions import Action
 
-trip_cb = CallbackData('trip', 'action', 'id', 'places')
+request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 
 
 class TripSearch(StatesGroup):
+    main_menu = State()
     direction = State()
     date = State()
     time = State()
 
 
-async def trip_search_start(message: types.Message):
+async def start_trip_search(message: types.Message):
     directions = get_directions()
 
     if directions is None:
@@ -32,7 +34,7 @@ async def trip_search_start(message: types.Message):
     await message.answer('Выбери интересующий маршрут.', reply_markup=keyboard)
 
 
-async def trip_search_direction_chosen(message: types.Message, state: FSMContext):
+async def direction_chosen(message: types.Message, state: FSMContext):
     directions = get_directions()
 
     if message.text not in directions:
@@ -54,14 +56,14 @@ async def trip_search_direction_chosen(message: types.Message, state: FSMContext
     await message.answer('Выбери дату поездки.', reply_markup=keyboard)
 
 
-async def trip_search_date_chosen(message: types.Message, state: FSMContext):
+async def date_chosen(message: types.Message, state: FSMContext):
     if message.text.lower() == 'назад':
         data = await state.get_data()
         data.pop('departure')
         data.pop('destination')
         await state.set_data(data)
 
-        await trip_search_start(message)
+        await start_trip_search(message)
         return
 
     parsed_date = parse_date_string(message.text.lower())
@@ -95,7 +97,7 @@ async def trip_search_date_chosen(message: types.Message, state: FSMContext):
     await message.answer('Выбери время поездки.', reply_markup=keyboard)
 
 
-async def trip_search_time_chosen(message: types.Message, state: FSMContext):
+async def time_chosen(message: types.Message, state: FSMContext):
     if message.text.lower() == 'назад':
         data = await state.get_data()
         data.pop('date')
@@ -104,7 +106,7 @@ async def trip_search_time_chosen(message: types.Message, state: FSMContext):
         message.text = f"{data['departure']} – {data['destination']}"
 
         await state.set_data(data)
-        await trip_search_direction_chosen(message, state)
+        await direction_chosen(message, state)
         return
 
     parsed_time = message.text.split(' ', maxsplit=1)[0]
@@ -123,24 +125,87 @@ async def trip_search_time_chosen(message: types.Message, state: FSMContext):
     for msg in answer_data:
         keyboard = types.InlineKeyboardMarkup()
 
+        args = {
+            'departure': user_data['departure'],
+            'destination': user_data['destination'],
+            'date': user_data['date'],
+            'time': parsed_time,
+            'id': msg['id'],
+            'places': msg['places']
+        }
+
         if msg['places'] < 4:
-            keyboard.row(types.InlineKeyboardButton('Отслеживать', callback_data=trip_cb.new(action='follow',
-                                                                                             places=msg['places'],
-                                                                                             id=msg['id'])),
-                         types.InlineKeyboardButton('Резерв', callback_data=trip_cb.new(action='follow',
-                                                                                        places=msg['places'],
-                                                                                        id=msg['id'])))
+            follow_button_data = request_cb.new(action=Action.FOLLOW_START.value, **args)
+            reserve_button_data = request_cb.new(action=Action.RESERVE_START.value, **args)
+            keyboard.row(types.InlineKeyboardButton('Отслеживать', callback_data=follow_button_data),
+                         types.InlineKeyboardButton('Резерв', callback_data=reserve_button_data))
 
         if msg['places'] > 0:
-            keyboard.row(types.InlineKeyboardButton('Забронировать', callback_data=trip_cb.new(action='booking',
-                                                                                               places=msg['places'],
-                                                                                               id=msg['id'])))
+            booking_button_data = request_cb.new(action=Action.BOOKING_START.value, **args)
+            keyboard.row(types.InlineKeyboardButton('Забронировать', callback_data=booking_button_data))
 
         await message.answer(msg['message'], reply_markup=keyboard)
 
 
+async def callback_start(query: types.CallbackQuery, callback_data: dict):
+    callback_data.pop('@')
+    keyboard = types.InlineKeyboardMarkup()
+    buttons = []
+
+    args = callback_data.copy()
+    args.pop('places')
+
+    if args['action'] == Action.BOOKING_START.value:
+        args.update({'action': Action.BOOKING_PLACES.value})
+
+        for i in range(1, int(callback_data['places']) + 1):
+            buttons.append(types.InlineKeyboardButton(str(i), callback_data=request_cb.new(places=str(i), **args)))
+
+    else:
+
+        if args['action'] == Action.FOLLOW_START.value:
+            args.update({'action': Action.FOLLOW_PLACES.value})
+        elif args['action'] == Action.RESERVE_START.value:
+            args.update({'action': Action.RESERVE_PLACES.value})
+
+        for i in range(int(callback_data['places']) + 1, 5):
+            buttons.append(types.InlineKeyboardButton(str(i), callback_data=request_cb.new(places=str(i), **args)))
+
+    keyboard.row(*buttons)
+
+    args.update({'action': Action.CANCEL.value, 'places': callback_data['places']})
+    keyboard.row(types.InlineKeyboardButton('Отмена', callback_data=request_cb.new(**args)))
+
+    await query.message.edit_reply_markup(keyboard)
+    await query.answer('Укажи необходимое количество мест.')
+
+
+async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
+    callback_data.pop('@')
+    callback_data.pop('action')
+    keyboard = types.InlineKeyboardMarkup()
+
+    if int(callback_data['places']) < 4:
+        follow_button_data = request_cb.new(action=Action.FOLLOW_START.value, **callback_data)
+        reserve_button_data = request_cb.new(action=Action.RESERVE_START.value, **callback_data)
+        keyboard.row(types.InlineKeyboardButton('Отслеживать', callback_data=follow_button_data),
+                     types.InlineKeyboardButton('Резерв', callback_data=reserve_button_data))
+
+    if int(callback_data['places']) > 0:
+        booking_button_data = request_cb.new(action=Action.BOOKING_START.value, **callback_data)
+        keyboard.row(types.InlineKeyboardButton('Забронировать', callback_data=booking_button_data))
+
+    await query.message.edit_reply_markup(keyboard)
+
+
 def register_handlers_trip_search(dp: Dispatcher):
-    dp.register_message_handler(trip_search_start, commands="find", state='*')
-    dp.register_message_handler(trip_search_direction_chosen, state=TripSearch.direction)
-    dp.register_message_handler(trip_search_date_chosen, state=TripSearch.date)
-    dp.register_message_handler(trip_search_time_chosen, state=TripSearch.time)
+    dp.register_message_handler(start_trip_search, commands="find", state='*')
+    dp.register_message_handler(direction_chosen, state=TripSearch.direction)
+    dp.register_message_handler(date_chosen, state=TripSearch.date)
+    dp.register_message_handler(time_chosen, state=TripSearch.time)
+
+    dp.register_callback_query_handler(callback_cancel, request_cb.filter(action=Action.CANCEL.value), state="*")
+
+    for action in [Action.FOLLOW_START.value, Action.RESERVE_START.value, Action.BOOKING_START.value]:
+        dp.register_callback_query_handler(callback_start,
+                                           request_cb.filter(action=action), state='*')
