@@ -72,3 +72,14 @@ def check_code(confirm_id, code):
         return None
 
     return response.json()
+
+
+def create_reserve(token, trip, places):
+    response = requests.post('https://znami.by/api/reserve.create',
+                             json={'personal_token': token, 'trip_id': trip, 'places': places})
+
+    if response.status_code != 200:
+        logger.error('Unable to create reserve.')
+        return None
+
+    return response.json()

@@ -5,8 +5,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-from app.handlers.common import reset_state
-from app.utils.data_requests import get_directions, get_trips
+from app.handlers.cabinet import get_token
+from app.utils.data_requests import get_directions, get_trips, create_reserve
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
@@ -23,7 +23,12 @@ class TripSearch(StatesGroup):
 
 
 async def start_trip_search(message: types.Message, state: FSMContext):
-    await reset_state(state)
+    user_data = await state.get_data()
+
+    for item in ['departure', 'destination', 'date', 'time']:
+        user_data.pop(item, None)
+
+    await state.set_data(user_data)
 
     directions = get_directions()
 
@@ -226,6 +231,35 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
     await callback_cancel(query, callback_data)
 
 
+async def callback_reserve_places(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    token = await get_token(state)
+
+    if token is None:
+        await query.message.reply('<b>Ошибка.</b> Резервирование доступно только авторизованным пользователям. '
+                                  'Пройди авторизацию в личном кабинете (/cabinet).')
+        await query.answer()
+        callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+        await callback_cancel(query, callback_data)
+        return
+
+    reserve_data = create_reserve(token, callback_data['id'], callback_data['places'])
+
+    if reserve_data is None:
+        await query.answer('Возникла ошибка при отправке запроса.', show_alert=True)
+
+    elif reserve_data['status'] == 'false':
+        await query.answer()
+        await query.message.reply(f'<b>Ошибка.</b> {reserve_data["error"]}')
+
+    else:
+        await query.message.reply('Резервирование создано. Когда на этот рейс появятся свободные места, '
+                                  'оператор свяжется с тобой.')
+
+    callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+    await callback_cancel(query, callback_data)
+    return
+
+
 async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
     callback_data.pop('@')
     callback_data.pop('action')
@@ -257,4 +291,6 @@ def register_handlers_trip_search(dp: Dispatcher):
                                            request_cb.filter(action=action), state='*')
 
     dp.register_callback_query_handler(callback_follow_places, request_cb.filter(action=Action.FOLLOW_PLACES.value),
+                                       state="*")
+    dp.register_callback_query_handler(callback_reserve_places, request_cb.filter(action=Action.RESERVE_PLACES.value),
                                        state="*")
