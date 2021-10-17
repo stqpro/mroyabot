@@ -9,6 +9,7 @@ from app.utils.data_requests import get_directions, get_trips
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
+from app.utils.dbworker import create_trip
 
 request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 
@@ -59,8 +60,8 @@ async def direction_chosen(message: types.Message, state: FSMContext):
 async def date_chosen(message: types.Message, state: FSMContext):
     if message.text.lower() == 'назад':
         data = await state.get_data()
-        data.pop('departure')
-        data.pop('destination')
+        data.pop('departure', None)
+        data.pop('destination', None)
         await state.set_data(data)
 
         await start_trip_search(message)
@@ -180,6 +181,19 @@ async def callback_start(query: types.CallbackQuery, callback_data: dict):
     await query.answer('Укажи необходимое количество мест.')
 
 
+async def callback_follow_places(query: types.CallbackQuery, callback_data: dict):
+    trip = create_trip(
+        query.message.chat.id,
+        callback_data['departure'],
+        callback_data['destination'],
+        callback_data['date'],
+        callback_data['time'],
+        callback_data['places']
+    )
+    print(trip)
+    await query.answer()
+
+
 async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
     callback_data.pop('@')
     callback_data.pop('action')
@@ -209,3 +223,17 @@ def register_handlers_trip_search(dp: Dispatcher):
     for action in [Action.FOLLOW_START.value, Action.RESERVE_START.value, Action.BOOKING_START.value]:
         dp.register_callback_query_handler(callback_start,
                                            request_cb.filter(action=action), state='*')
+
+    dp.register_callback_query_handler(callback_follow_places, request_cb.filter(action=Action.FOLLOW_PLACES.value),
+                                       state="*")
+
+# {
+# '@': 'do',
+# 'action': '1',
+# 'departure': 'Слоним',
+# 'destination': 'Минск',
+# 'date': '2021-10-24',
+# 'time': '18:30',
+# 'id': '29922',
+# 'places': '1'
+# }

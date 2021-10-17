@@ -1,9 +1,18 @@
 from aiogram import Dispatcher, types
+from aiogram.dispatcher import FSMContext
 
 from app.handlers.trip_search import TripSearch, start_trip_search
+from app.handlers.cabinet import cabinet_start
 
 
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message, state: FSMContext):
+    user_data = await state.get_data()
+
+    for item in ['departure', 'destination', 'date', 'time']:
+        user_data.pop(item, None)
+
+    await state.set_data(user_data)
+
     buttons = [[types.KeyboardButton('Поиск рейсов')],
                [types.KeyboardButton('Отслеживание'), types.KeyboardButton('Личный кабинет')],
                [types.KeyboardButton('Информация о боте')]]
@@ -14,7 +23,7 @@ async def cmd_start(message: types.Message):
                                                                 input_field_placeholder='Главное меню'))
 
 
-async def main_menu_handler(message: types.Message):
+async def main_menu_handler(message: types.Message, state: FSMContext):
     if message.text.lower() == 'поиск рейсов':
         await start_trip_search(message)
 
@@ -22,7 +31,7 @@ async def main_menu_handler(message: types.Message):
         pass
 
     elif message.text.lower() == 'личный кабинет':
-        pass
+        await cabinet_start(message, state)
 
     elif message.text.lower() == 'информация о боте':
         pass

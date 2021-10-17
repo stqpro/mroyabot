@@ -46,3 +46,29 @@ def get_trips(date: str, city_1: str, city_2: str, time=None):
         return trips_data['trips']
 
     return list(filter(lambda x: x['time'] == time, trips_data['trips']))
+
+
+def send_code(phone):
+    response = requests.post('https://znami.by/api/confirm.send', json={'phone': phone})
+
+    if response.status_code != 200:
+        logger.error('Unable to send SMS.')
+        return None
+
+    confirm_data = response.json()
+
+    if confirm_data['status'] != 'ok':
+        logger.error('Error while sending SMS.')
+        return None
+
+    return confirm_data['confirm_id']
+
+
+def check_code(confirm_id, code):
+    response = requests.post('https://znami.by/api/confirm.check', json={'confirm_id': confirm_id, 'code': code})
+
+    if response.status_code != 200:
+        logger.error('Unable to check code.')
+        return None
+
+    return response.json()

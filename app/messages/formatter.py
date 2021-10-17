@@ -36,10 +36,10 @@ def parse_driver_info(driver: Union[Dict, None]) -> str:
 def parse_trips_info(trips: List[Dict], direction: str) -> List[Dict]:
     message = f"<b>Маршрут:</b> {direction}\n\n" \
               f"<b>Дата:</b> {reformat_date(trips[0]['date'])}\n" \
-              f"<b>Время:</b> {trips[0]['time']}\n\n" \
+              f"<b>Время:</b> {trips[0]['time']}\n" \
 
     if len(trips) > 1 and trips[0]['car'] is None:
-        message += f"<b>Рейсов:</b> {len(trips)}\n" \
+        message += f"\n<b>Рейсов:</b> {len(trips)}\n" \
                    f"<b>Свободных мест:</b> {sum([int(t['free_places']) for t in trips])} " \
                    f"<em>({' + '.join(str(t['free_places']) for t in trips)})</em>\n\n"
 
