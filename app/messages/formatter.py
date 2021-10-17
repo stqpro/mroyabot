@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 from typing import Union, Dict, List
@@ -58,3 +59,12 @@ def parse_trips_info(trips: List[Dict], direction: str) -> List[Dict]:
                        'id': t['id']})
 
     return result
+
+
+def parse_favourite(trip):
+    message = f"<b>Маршрут:</b> {trip.departure} – {trip.destination}\n\n" \
+              f"<b>Дата:</b> {datetime.datetime.strptime(trip.date, '%Y-%m-%d').strftime('%d/%m/%Y')}\n" \
+              f"<b>Время:</b> {trip.time}\n<b>Количество мест:</b> {trip.places}\n\n" \
+              f"<b>Добавлен:</b> {trip.created_at.strftime('%d/%m/%Y %H:%M')}"
+
+    return message

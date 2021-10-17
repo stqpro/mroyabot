@@ -5,11 +5,12 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
+from app.handlers.common import reset_state
 from app.utils.data_requests import get_directions, get_trips
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
-from app.utils.dbworker import create_trip
+from app.utils.dbworker import create_trip, get_user_trips, update_status
 
 request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 
@@ -21,7 +22,9 @@ class TripSearch(StatesGroup):
     time = State()
 
 
-async def start_trip_search(message: types.Message):
+async def start_trip_search(message: types.Message, state: FSMContext):
+    await reset_state(state)
+
     directions = get_directions()
 
     if directions is None:
@@ -182,7 +185,34 @@ async def callback_start(query: types.CallbackQuery, callback_data: dict):
 
 
 async def callback_follow_places(query: types.CallbackQuery, callback_data: dict):
-    trip = create_trip(
+    trip_time = datetime.datetime.strptime(f"{callback_data['date']} {callback_data['time']}", "%Y-%m-%d %H:%M")
+
+    if trip_time < datetime.datetime.now():
+        await query.answer('Нельзя отслеживать уехавшие маршрутки...', show_alert=True)
+        await query.message.edit_reply_markup(None)
+        return
+
+    user_trips = get_user_trips(query.message.chat.id)
+
+    if len([t for t in user_trips if t.status == True]) > 6:
+        await query.answer('Ты можешь отслеживать не более семи рейсов.', show_alert=True)
+        return
+
+    for t in user_trips:
+        if t.departure.lower() == callback_data['departure'].lower() \
+                and t.destination.lower() == callback_data['destination'].lower() \
+                and t.date == callback_data['date'] \
+                and t.time == callback_data['time']:
+
+            if t.status:
+                await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
+                return
+
+            update_status(t.id, True)
+            await query.answer('Отслеживание рейса возобновлено.', show_alert=True)
+            return
+
+    create_trip(
         query.message.chat.id,
         callback_data['departure'],
         callback_data['destination'],
@@ -190,8 +220,10 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
         callback_data['time'],
         callback_data['places']
     )
-    print(trip)
-    await query.answer()
+
+    await query.answer('Рейс добавлен в отслеживаемые.', show_alert=True)
+    callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+    await callback_cancel(query, callback_data)
 
 
 async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
@@ -226,14 +258,3 @@ def register_handlers_trip_search(dp: Dispatcher):
 
     dp.register_callback_query_handler(callback_follow_places, request_cb.filter(action=Action.FOLLOW_PLACES.value),
                                        state="*")
-
-# {
-# '@': 'do',
-# 'action': '1',
-# 'departure': 'Слоним',
-# 'destination': 'Минск',
-# 'date': '2021-10-24',
-# 'time': '18:30',
-# 'id': '29922',
-# 'places': '1'
-# }

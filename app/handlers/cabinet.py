@@ -4,6 +4,7 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+from app.handlers.common import reset_state
 from app.utils.data_requests import send_code, check_code
 
 
@@ -22,6 +23,8 @@ async def get_token(state: FSMContext):
 
 
 async def cabinet_start(message: types.Message, state: FSMContext):
+    await reset_state(state)
+
     if (await get_token(state)) is None:
         text = "Для просмотра личного кабинета необходимо пройти авторизацию с помощью номера телефона. После " \
                "авторизации тебе станут доступны:\n• бронирование мест прямо из бота;\n• запись в резерв;\n" \

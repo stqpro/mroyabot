@@ -23,6 +23,8 @@ class Trip(BaseModel):
 
 
 def create_trip(user_id, departure, destination, date, time, places):
+    database.connect(reuse_if_open=True)
+
     with database.atomic():
         trip = Trip.create(
             user_id=user_id,
@@ -31,8 +33,34 @@ def create_trip(user_id, departure, destination, date, time, places):
             date=date,
             time=time,
             places=places,
-            status=1,
+            status=True,
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-        return trip
+
+    database.close()
+    return trip
+
+
+def get_user_trips(user_id, active=False):
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        if not active:
+            trips = Trip.select().where(Trip.user_id == user_id).order_by(Trip.date, Trip.time)
+        else:
+            trips = Trip.select().where(Trip.user_id == user_id and Trip.status == True).order_by(Trip.date, Trip.time)
+
+    database.close()
+    return trips
+
+
+def update_status(trip, status):
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        query = Trip.update({Trip.status: status, Trip.updated_at: datetime.now()}).where(Trip.id == trip)
+        result = query.execute()
+
+    database.close()
+    return result
