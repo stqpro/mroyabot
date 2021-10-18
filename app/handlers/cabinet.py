@@ -1,13 +1,19 @@
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils.callback_data import CallbackData
 
-from app.utils.data_requests import send_code, check_code
+from app.messages.formatter import parse_active
+from app.utils.data_requests import send_code, check_code, get_user, get_tickets
+
+
+cancel_cb = CallbackData('cancel', 'type', 'id')
 
 
 class Cabinet(StatesGroup):
     non_authorized = State()
     check_code = State()
+    authorized = State()
 
 
 async def get_token(state: FSMContext):
@@ -27,7 +33,9 @@ async def cabinet_start(message: types.Message, state: FSMContext):
 
     await state.set_data(user_data)
 
-    if (await get_token(state)) is None:
+    token = await get_token(state)
+
+    if token is None:
         text = "Для просмотра личного кабинета необходимо пройти авторизацию с помощью номера телефона. После " \
                "авторизации тебе станут доступны:\n• бронирование мест прямо из бота;\n• запись в резерв;\n" \
                "• управление профилем и активными заявками;\n• просмотр статистики поездок.\n\n" \
@@ -41,7 +49,64 @@ async def cabinet_start(message: types.Message, state: FSMContext):
         await message.answer(text, reply_markup=keyboard)
         return
 
-    pass  # authorized
+    user_info = get_user(token)
+
+    if user_info is None:
+        await message.answer('<b>Ошибка.</b> Не удалось загрузить пользовательские данные.')
+        return
+
+    text = "<b>Личный кабинет\n\nФамилия:</b> "
+
+    if user_info['fio'] is None:
+        text += 'не задана'
+    else:
+        text += user_info['fio']
+
+    text += f"\n<b>ID пользователя:</b> {user_info['client_id']}"
+
+    buttons = [[types.KeyboardButton('Активные поездки'), types.KeyboardButton('Резерв')],
+               [types.KeyboardButton('Архив поездок'), types.KeyboardButton('Изменить фамилию')],
+               [types.KeyboardButton('Выход из профиля')]]
+
+    keyboard = types.ReplyKeyboardMarkup(buttons, resize_keyboard=True, input_field_placeholder='Личный кабинет')
+    await message.answer(text, reply_markup=keyboard)
+    await Cabinet.authorized.set()
+
+
+async def cabinet_main_menu(message: types.Message, state: FSMContext):
+    token = await get_token(state)
+
+    if message.text.lower() in ['активные поездки', 'резерв']:
+        if token is None:
+            await message.answer('<b>Ошибка</b>. Не удалось загрузить информацию профиля.')
+            return
+
+        if message.text.lower() == 'активные поездки':
+            mode = 'active'
+        else:
+            mode = 'reserve'
+
+        tickets = get_tickets(token, mode)
+
+        if tickets is None:
+            await message.answer('<b>Ошибка.</b> Не удалось загрузить список заявок.')
+            return
+
+        tickets.sort(key=lambda x: x['date'])
+
+        if len(tickets) == 0:
+            if message.text.lower() == 'активные заявки':
+                await message.answer('Активные заявки не найдены.')
+            else:
+                await message.answer('Заявки в резерв не найдены.')
+            return
+
+        for t in tickets:
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton('Отменить', callback_data=cancel_cb.new(type=mode, id=t['id'])))
+            await message.reply(parse_active(t), reply_markup=keyboard)
+
+        return
 
 
 async def contact_sent(message: types.Message, state: FSMContext):
@@ -91,8 +156,12 @@ async def code_sent(message: types.Message, state: FSMContext):
     await message.answer('ok')
 
 
+def register_commands_cabinet(dp: Dispatcher):
+    dp.register_message_handler(cabinet_start, commands="account", state="*")
+
+
 def register_handlers_cabinet(dp: Dispatcher):
-    dp.register_message_handler(cabinet_start, commands="cabinet", state="*")
     dp.register_message_handler(contact_sent, content_types=types.ContentType.CONTACT,
                                 state=Cabinet.non_authorized.state)
     dp.register_message_handler(code_sent, state=Cabinet.check_code.state)
+    dp.register_message_handler(cabinet_main_menu, state=Cabinet.authorized.state)

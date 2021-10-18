@@ -83,3 +83,41 @@ def create_reserve(token, trip, places):
         return None
 
     return response.json()
+
+
+def get_user(token):
+    response = requests.get('https://znami.by/api/user.check', params={'personal_token': token})
+
+    if response.status_code != 200:
+        logger.error('Unable to get user info.')
+        return None
+
+    user_data = response.json()
+
+    if user_data['status'] != 'ok':
+        logger.error('Error while getting user info.')
+        return None
+
+    return user_data['user']
+
+
+def get_tickets(token, mode):
+    response = requests.get('https://znami.by/api/tickets.get', params={'personal_token': token})
+
+    if response.status_code != 200:
+        logger.error('Unable to get users tickets.')
+        return None
+
+    tickets_data = response.json()
+
+    if tickets_data['status'] != 'ok':
+        logger.error('Error while getting users tickets')
+        return None
+
+    if mode == 'active':
+        return [t for t in tickets_data['tickets'] if t['status'] == 1 and t['closed'] == 0]
+
+    if mode == 'reserve':
+        return [t for t in tickets_data['tickets'] if t['status'] == 5 and t['closed'] == 0]
+
+    return [t for t in tickets_data['tickets'] if t['closed'] == 1]

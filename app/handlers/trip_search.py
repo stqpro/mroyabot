@@ -72,7 +72,7 @@ async def date_chosen(message: types.Message, state: FSMContext):
         data.pop('destination', None)
         await state.set_data(data)
 
-        await start_trip_search(message)
+        await start_trip_search(message, state)
         return
 
     parsed_date = parse_date_string(message.text.lower())
@@ -199,7 +199,7 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
 
     user_trips = get_user_trips(query.message.chat.id)
 
-    if len([t for t in user_trips if t.status == True]) > 6:
+    if len([t for t in user_trips if t.status]) > 6:
         await query.answer('Ты можешь отслеживать не более семи рейсов.', show_alert=True)
         return
 
@@ -236,7 +236,7 @@ async def callback_reserve_places(query: types.CallbackQuery, callback_data: dic
 
     if token is None:
         await query.message.reply('<b>Ошибка.</b> Резервирование доступно только авторизованным пользователям. '
-                                  'Пройди авторизацию в личном кабинете (/cabinet).')
+                                  'Пройди авторизацию в личном кабинете (/account).')
         await query.answer()
         callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
         await callback_cancel(query, callback_data)
@@ -275,11 +275,15 @@ async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
         booking_button_data = request_cb.new(action=Action.BOOKING_START.value, **callback_data)
         keyboard.row(types.InlineKeyboardButton('Забронировать', callback_data=booking_button_data))
 
+    await query.answer()
     await query.message.edit_reply_markup(keyboard)
 
 
-def register_handlers_trip_search(dp: Dispatcher):
+def register_commands_trip_search(dp: Dispatcher):
     dp.register_message_handler(start_trip_search, commands="find", state='*')
+
+
+def register_handlers_trip_search(dp: Dispatcher):
     dp.register_message_handler(direction_chosen, state=TripSearch.direction)
     dp.register_message_handler(date_chosen, state=TripSearch.date)
     dp.register_message_handler(time_chosen, state=TripSearch.time)

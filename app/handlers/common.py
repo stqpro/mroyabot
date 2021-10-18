@@ -35,7 +35,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
 async def main_menu_handler(message: types.Message, state: FSMContext):
     if message.text.lower() == 'поиск рейсов':
-        await start_trip_search(message)
+        await start_trip_search(message, state)
 
     elif message.text.lower() == 'отслеживание':
         trips = get_user_trips(message.chat.id, active=True)
