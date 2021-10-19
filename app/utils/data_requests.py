@@ -74,6 +74,18 @@ def check_code(confirm_id, code):
     return response.json()
 
 
+def create_booking(token, departure, destination, date, time, places, trip_id, station):
+    response = requests.post('https://znami.by/api/ticket.create',
+                             json={'personal_token': token, 'city_1': departure, 'city_2': destination, 'date': date,
+                                   'time': time, 'places': places, 'trip_id': trip_id, 'station_id': station})
+
+    if response.status_code != 200:
+        logger.error('Unable to create booking.')
+        return None
+
+    return response.json()
+
+
 def create_reserve(token, trip, places):
     response = requests.post('https://znami.by/api/reserve.create',
                              json={'personal_token': token, 'trip_id': trip, 'places': places})
@@ -114,10 +126,42 @@ def get_tickets(token, mode):
         logger.error('Error while getting users tickets')
         return None
 
-    if mode == 'active':
+    if mode == 'booking':
         return [t for t in tickets_data['tickets'] if t['status'] == 1 and t['closed'] == 0]
 
     if mode == 'reserve':
         return [t for t in tickets_data['tickets'] if t['status'] == 5 and t['closed'] == 0]
 
-    return [t for t in tickets_data['tickets'] if t['closed'] == 1]
+    if mode == 'archive':
+        return [t for t in tickets_data['tickets'] if t['closed'] == 1]
+
+
+def cancel_trip(mode: str, ticket_id: int, token):
+    if mode == 'booking':
+        url = 'https://znami.by/api/ticket.cancel'
+    else:
+        url = 'https://znami.by/api/reserve.cancel'
+
+    response = requests.post(url, params={'personal_token': token, 'ticket_id': ticket_id})
+
+    if response.status_code != 200:
+        logger.error('Unable to cancel ticket.')
+        return None
+
+    return response.json()
+
+
+def get_stations(departure, destination):
+    response = requests.get('https://znami.by/trips.get', params={'city_1': departure, 'city_2': destination})
+
+    if response.status_code != 200:
+        logger.error('Unable to get stations list.')
+        return None
+
+    stations_data = response.json()
+
+    if stations_data['status'] != 'ok':
+        logger.error('Error while getting stations list.')
+        return None
+
+    return stations_data['stations_1']

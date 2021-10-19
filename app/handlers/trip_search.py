@@ -6,7 +6,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
 from app.handlers.cabinet import get_token
-from app.utils.data_requests import get_directions, get_trips, create_reserve
+from app.utils.data_requests import get_directions, get_trips, create_reserve, get_stations, create_booking
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
@@ -20,12 +20,13 @@ class TripSearch(StatesGroup):
     direction = State()
     date = State()
     time = State()
+    station = State()
 
 
 async def start_trip_search(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
 
-    for item in ['departure', 'destination', 'date', 'time']:
+    for item in ['departure', 'destination', 'date', 'time', 'places', 'trip_id']:
         user_data.pop(item, None)
 
     await state.set_data(user_data)
@@ -156,6 +157,48 @@ async def time_chosen(message: types.Message, state: FSMContext):
         await message.answer(msg['message'], reply_markup=keyboard)
 
 
+async def station_chosen(message: types.Message, state: FSMContext):
+    if message.text.lower() == 'отменить':
+        await message.answer('Бронирование отменено.')
+        await start_trip_search(message, state)
+        return
+
+    token = await get_token(state)
+
+    if token is None:
+        await message.answer('<b>Ошибка.</b> Бронирование доступно только авторизованным пользователям. '
+                             'Пройди авторизацию в личном кабинете (/account).')
+        await start_trip_search(message, state)
+        return
+
+    user_data = await state.get_data()
+    stations = get_stations(user_data['departure'], user_data['destination'])
+
+    if stations is None:
+        await message.answer('<b>Ошибка</b>. Не удалось обработать сообщение.')
+        await start_trip_search(message, state)
+        return
+
+    for s in stations:
+        print(s['name'], message.text)
+        if s['name'].lower() == message.text.lower():
+
+            booking_data = create_booking(token, user_data['departure'], user_data['destination'], user_data['date'],
+                                          user_data['time'], user_data['places'], user_data['trip_id'], s['id'])
+
+            if booking_data is None:
+                await message.answer('<b>Ошибка</b>. Не удалось создать бронирование.')
+
+            elif booking_data['status'] == 'false':
+                await message.answer(f'<b>Ошибка</b>. {booking_data["error"]}')
+
+            else:
+                await message.answer('Бронирование успешно создано.')
+
+            await start_trip_search(message, state)
+            return
+
+
 async def callback_start(query: types.CallbackQuery, callback_data: dict):
     callback_data.pop('@')
     keyboard = types.InlineKeyboardMarkup()
@@ -167,7 +210,7 @@ async def callback_start(query: types.CallbackQuery, callback_data: dict):
     if args['action'] == Action.BOOKING_START.value:
         args.update({'action': Action.BOOKING_PLACES.value})
 
-        for i in range(1, int(callback_data['places']) + 1):
+        for i in range(1, min(int(callback_data['places']) + 1, 5)):
             buttons.append(types.InlineKeyboardButton(str(i), callback_data=request_cb.new(places=str(i), **args)))
 
     else:
@@ -231,6 +274,28 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
     await callback_cancel(query, callback_data)
 
 
+async def callback_booking_places(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    stations = get_stations(callback_data['departure'], callback_data['destination'])
+
+    if stations is None:
+        await query.answer('Ошибка. Не удалось загрузить список остановочных пунктов.', show_alert=True)
+        return
+
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, input_field_placeholder='Место посадки', row_width=1)
+    keyboard.add(*[s['name'] for s in stations], 'Отменить')
+
+    await state.update_data({'departure': callback_data['departure'],
+                             'destination': callback_data['destination'],
+                             'date': callback_data['date'],
+                             'time': callback_data['time'],
+                             'places': callback_data['places'],
+                             'trip_id': callback_data['id']})
+
+    await query.answer()
+    await query.message.reply('Выбери место посадки.', reply_markup=keyboard)
+    await TripSearch.station.set()
+
+
 async def callback_reserve_places(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     token = await get_token(state)
 
@@ -287,6 +352,7 @@ def register_handlers_trip_search(dp: Dispatcher):
     dp.register_message_handler(direction_chosen, state=TripSearch.direction)
     dp.register_message_handler(date_chosen, state=TripSearch.date)
     dp.register_message_handler(time_chosen, state=TripSearch.time)
+    dp.register_message_handler(station_chosen, state=TripSearch.station)
 
     dp.register_callback_query_handler(callback_cancel, request_cb.filter(action=Action.CANCEL.value), state="*")
 
@@ -297,4 +363,6 @@ def register_handlers_trip_search(dp: Dispatcher):
     dp.register_callback_query_handler(callback_follow_places, request_cb.filter(action=Action.FOLLOW_PLACES.value),
                                        state="*")
     dp.register_callback_query_handler(callback_reserve_places, request_cb.filter(action=Action.RESERVE_PLACES.value),
+                                       state="*")
+    dp.register_callback_query_handler(callback_booking_places, request_cb.filter(action=Action.BOOKING_PLACES.value),
                                        state="*")

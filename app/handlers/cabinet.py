@@ -4,10 +4,9 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
 from app.messages.formatter import parse_active
-from app.utils.data_requests import send_code, check_code, get_user, get_tickets
+from app.utils.data_requests import send_code, check_code, get_user, get_tickets, cancel_trip
 
-
-cancel_cb = CallbackData('cancel', 'type', 'id')
+cancel_cb = CallbackData('cancel', 'type', 'id', 'confirmed')
 
 
 class Cabinet(StatesGroup):
@@ -28,7 +27,7 @@ async def get_token(state: FSMContext):
 async def cabinet_start(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
 
-    for item in ['departure', 'destination', 'date', 'time']:
+    for item in ['departure', 'destination', 'date', 'time', 'places', 'trip_id']:
         user_data.pop(item, None)
 
     await state.set_data(user_data)
@@ -82,7 +81,7 @@ async def cabinet_main_menu(message: types.Message, state: FSMContext):
             return
 
         if message.text.lower() == 'активные поездки':
-            mode = 'active'
+            mode = 'booking'
         else:
             mode = 'reserve'
 
@@ -103,7 +102,8 @@ async def cabinet_main_menu(message: types.Message, state: FSMContext):
 
         for t in tickets:
             keyboard = types.InlineKeyboardMarkup()
-            keyboard.add(types.InlineKeyboardButton('Отменить', callback_data=cancel_cb.new(type=mode, id=t['id'])))
+            keyboard.add(types.InlineKeyboardButton('Отменить',
+                                                    callback_data=cancel_cb.new(type=mode, id=t['id'], confirmed='0')))
             await message.reply(parse_active(t), reply_markup=keyboard)
 
         return
@@ -156,6 +156,63 @@ async def code_sent(message: types.Message, state: FSMContext):
     await message.answer('ok')
 
 
+async def callback_cancel_ticket(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    if callback_data['type'] == 'booking':
+        action = 'Бронирование'
+    else:
+        action = 'Резервирование'
+
+    if callback_data['confirmed'] == '0':
+        callback_data.pop('@')
+        callback_data.pop('confirmed')
+
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.row(types.InlineKeyboardButton('Да', callback_data=cancel_cb.new(**callback_data, confirmed='1')),
+                     types.InlineKeyboardButton('Нет', callback_data=cancel_cb.new(**callback_data, confirmed='2')))
+
+        await query.answer()
+        await query.message.edit_text(f"{query.message.parse_entities()}\n\n"
+                                      f"<b>Ты точно хочешь отменить {action.lower()}?</b>", reply_markup=keyboard)
+        return
+
+    if callback_data['confirmed'] == '1':
+        token = await get_token(state)
+
+        if token is None:
+            await query.answer('Для отмены поездки необходима авторизация.', show_alert=True)
+            await query.message.edit_reply_markup(None)
+            return
+
+        cancel_data = cancel_trip(callback_data['type'], callback_data['id'], token)
+
+        if cancel_data is None:
+            await query.answer('Ошибка. Возникла проблема при отправке запроса.', show_alert=True)
+            return
+
+        if cancel_data['status'] == 'false':
+            await query.answer(f'Ошибка. {cancel_data["error"]}', show_alert=True)
+            return
+
+        await query.answer()
+        await query.message.edit_text(f"{query.message.parse_entities().split('<b>Ты', maxsplit=1)[0]}"
+                                      f"<em>{action} отменено.</em>", reply_markup=None)
+        return
+
+    if callback_data['confirmed'] == '2':
+        callback_data.pop('@')
+        callback_data.pop('confirmed')
+
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.row(types.InlineKeyboardButton('Отменить',
+                                                callback_data=cancel_cb.new(**callback_data, confirmed='0')))
+
+        await query.answer()
+        await query.message.edit_text(query.message.parse_entities().split('\n\n<b>Ты', maxsplit=1)[0],
+                                      reply_markup=keyboard)
+
+        return
+
+
 def register_commands_cabinet(dp: Dispatcher):
     dp.register_message_handler(cabinet_start, commands="account", state="*")
 
@@ -165,3 +222,4 @@ def register_handlers_cabinet(dp: Dispatcher):
                                 state=Cabinet.non_authorized.state)
     dp.register_message_handler(code_sent, state=Cabinet.check_code.state)
     dp.register_message_handler(cabinet_main_menu, state=Cabinet.authorized.state)
+    dp.register_callback_query_handler(callback_cancel_ticket, cancel_cb.filter(), state="*")

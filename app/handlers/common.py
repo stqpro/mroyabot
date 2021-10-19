@@ -14,7 +14,7 @@ unfollow_cb = CallbackData('unfollow', 'id', 'confirm')
 async def reset_state(state: FSMContext):
     user_data = await state.get_data()
 
-    for item in ['departure', 'destination', 'date', 'time']:
+    for item in ['departure', 'destination', 'date', 'time', 'places', 'trip_id']:
         user_data.pop(item, None)
 
     await state.set_data(user_data)
