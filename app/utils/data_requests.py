@@ -75,9 +75,19 @@ def check_code(confirm_id, code):
 
 
 def create_booking(token, departure, destination, date, time, places, trip_id, station):
+    user_info = get_user(token)
+
+    if user_info is None:
+        return None
+
+    if user_info['fio'] is None:
+        return {'status': 'false', 'error': 'Для бронирования рейсов необходимо указать фамилию в личном кабинете. '
+                                            '(/account).'}
+
     response = requests.post('https://znami.by/api/ticket.create',
                              json={'personal_token': token, 'city_1': departure, 'city_2': destination, 'date': date,
-                                   'time': time, 'places': places, 'trip_id': trip_id, 'station_id': station})
+                                   'time': time, 'places': places, 'trip_id': trip_id, 'station_id': station,
+                                   'fio': user_info['fio']})
 
     if response.status_code != 200:
         logger.error('Unable to create booking.')
@@ -87,8 +97,17 @@ def create_booking(token, departure, destination, date, time, places, trip_id, s
 
 
 def create_reserve(token, trip, places):
+    user_info = get_user(token)
+
+    if user_info is None:
+        return None
+
+    if user_info['fio'] is None:
+        return {'status': 'false', 'error': 'Для резервирования рейсов необходимо указать фамилию в личном кабинете. '
+                                            '(/account).'}
+
     response = requests.post('https://znami.by/api/reserve.create',
-                             json={'personal_token': token, 'trip_id': trip, 'places': places})
+                             json={'personal_token': token, 'trip_id': trip, 'places': places, 'fio': user_info['fio']})
 
     if response.status_code != 200:
         logger.error('Unable to create reserve.')
@@ -165,3 +184,13 @@ def get_stations(departure, destination):
         return None
 
     return stations_data['stations_1']
+
+
+def update_last_name(last_name, token):
+    response = requests.post('https://znami.by/api/user.update', params={'fio': last_name, 'personal_token': token})
+
+    if response.status_code != 200:
+        logger.error('Unable to update users last name.')
+        return None
+
+    return response.json()

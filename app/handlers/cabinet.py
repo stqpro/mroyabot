@@ -1,18 +1,26 @@
+import datetime
+import re
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-from app.messages.formatter import parse_active
-from app.utils.data_requests import send_code, check_code, get_user, get_tickets, cancel_trip
+from app.messages.formatter import parse_active, parse_archive
+from app.utils.data_requests import send_code, check_code, get_user, get_tickets, cancel_trip, update_last_name
 
 cancel_cb = CallbackData('cancel', 'type', 'id', 'confirmed')
+
+months = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+          'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
 
 
 class Cabinet(StatesGroup):
     non_authorized = State()
     check_code = State()
     authorized = State()
+    archive = State()
+    last_name = State()
 
 
 async def get_token(state: FSMContext):
@@ -108,6 +116,115 @@ async def cabinet_main_menu(message: types.Message, state: FSMContext):
 
         return
 
+    if message.text.lower() == 'архив поездок':
+        if token is None:
+            await message.answer('<b>Ошибка</b>. Не удалось загрузить информацию профиля.')
+            return
+
+        archive = get_tickets(token, 'archive')
+        archive.sort(key=lambda x: x['date'], reverse=True)
+
+        merged_trips = {}
+
+        for item in archive:
+            date_object = datetime.datetime.strptime(item['date'], '%Y-%m-%d')
+            name = f"{months[date_object.month - 1]} {date_object.year}"
+            merged_trips.setdefault(name, 0)
+            merged_trips[name] += 1
+
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, input_field_placeholder='Архив поездок', row_width=2)
+        keyboard.add(*[f"{t[0]} ({t[1]})" for t in merged_trips.items()], 'Назад')
+
+        await message.answer(f'<b>Поездок в архиве:</b> {len(archive)}\n\nДля удобства просмотра информация о поездках '
+                             f'разделена на группы по месяцам, в скобках указано количество заказов.',
+                             reply_markup=keyboard)
+        await Cabinet.archive.set()
+        return
+
+    if message.text.lower() == 'изменить фамилию':
+        if token is None:
+            await message.answer('<b>Ошибка</b>. Не удалось загрузить информацию профиля.')
+            return
+
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, input_field_placeholder='Смена фамилии')
+        keyboard.add('Отменить')
+        await message.answer('Отправь новую фамилию в сообщении.', reply_markup=keyboard)
+        await Cabinet.last_name.set()
+        return
+
+    if message.text.lower() == 'выход из профиля':
+        user_data = await state.get_data()
+        user_data.pop('token', None)
+        await state.set_data(user_data)
+
+        await cabinet_start(message, state)
+        return
+
+
+async def cabinet_last_name(message: types.Message, state: FSMContext):
+    if message.text.lower() == 'отменить':
+        await cabinet_start(message, state)
+        return
+
+    if re.match(r'^([А-Яа-я -]+)$', message.text) is None:
+        await message.answer('<b>Ошибка.</b> Фамилия содержит недопустимые символы.')
+        return
+
+    token = await get_token(state)
+
+    if token is None:
+        await message.answer('<b>Ошибка.</b> Не удалось загрузить информацию профиля.')
+        return
+
+    update_data = update_last_name(message.text, token)
+
+    if update_data is None:
+        await message.answer('<b>Ошибка.</b> Не удалось обработать ответ сервера.')
+        return
+
+    if update_data['status'] == 'false':
+        await message.answer(f'<b>Ошибка.</b> {update_data["error"]}')
+        return
+
+    await message.answer('Фамилия изменена.')
+    await cabinet_start(message, state)
+    return
+
+
+async def cabinet_archive(message: types.Message, state: FSMContext):
+    if message.text.lower() == 'назад':
+        await cabinet_start(message, state)
+        return
+
+    try:
+        parts = message.text.lower().split(' ', maxsplit=2)
+
+        if parts[0] in months and re.match(r'20[1-2][0-9]', parts[1]):
+
+            month_idx = -1
+
+            for idx, m in enumerate(months):
+                if parts[0] == m:
+                    month_idx = idx + 1
+                    break
+
+            token = await get_token(state)
+
+            if token is None:
+                await message.answer('<b>Ошибка</b>. Не удалось загрузить информацию профиля.')
+                return
+
+            archive = get_tickets(token, 'archive')
+            archive.sort(key=lambda x: x['date'])
+
+            for t in archive:
+                date_object = datetime.datetime.strptime(t['date'], '%Y-%m-%d')
+                if date_object.month == month_idx and date_object.year == int(parts[1]):
+                    await message.reply(parse_archive(t))
+
+    except KeyError:
+        pass
+
 
 async def contact_sent(message: types.Message, state: FSMContext):
     contact_id = None
@@ -153,7 +270,9 @@ async def code_sent(message: types.Message, state: FSMContext):
         return
 
     await state.update_data({'token': confirm_data['user']['personal_token']})
-    await message.answer('ok')
+    await message.answer('Авторизация произведена успешно.')
+    await cabinet_start(message, state)
+    return
 
 
 async def callback_cancel_ticket(query: types.CallbackQuery, callback_data: dict, state: FSMContext):
@@ -222,4 +341,6 @@ def register_handlers_cabinet(dp: Dispatcher):
                                 state=Cabinet.non_authorized.state)
     dp.register_message_handler(code_sent, state=Cabinet.check_code.state)
     dp.register_message_handler(cabinet_main_menu, state=Cabinet.authorized.state)
+    dp.register_message_handler(cabinet_archive, state=Cabinet.archive.state)
+    dp.register_message_handler(cabinet_last_name, state=Cabinet.last_name.state)
     dp.register_callback_query_handler(callback_cancel_ticket, cancel_cb.filter(), state="*")

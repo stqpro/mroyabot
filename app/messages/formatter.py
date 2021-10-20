@@ -77,3 +77,23 @@ def parse_active(trip):
               f"{parse_car_info(trip['car'])}\n{parse_driver_info(trip['driver'])}"
 
     return message
+
+
+def parse_archive(trip):
+    message = f"<b>Маршрут:</b> {trip['city_1']} – {trip['city_2']}\n\n" \
+              f"<b>Дата:</b> {datetime.datetime.strptime(trip['date'], '%Y-%m-%d').strftime('%d/%m/%Y')}\n" \
+              f"<b>Время:</b> {trip['time']}\n\n"
+
+    if trip['status'] == 0:
+        message += "<em>Поездка отменена.</em>"
+        return message
+
+    message += f"{parse_car_info(trip['car'])}\n{parse_driver_info(trip['driver'])}"
+
+    if trip['station_1'] is not None:
+        message += f"\n\n<b>Место посадки:</b> {trip['station_1']['name']}"
+
+    if trip['station_2'] is not None:
+        message += f"\n<b>Место высадки:</b> {trip['station_2']['name']}"
+
+    return message
