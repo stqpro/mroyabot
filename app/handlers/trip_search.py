@@ -180,7 +180,6 @@ async def station_chosen(message: types.Message, state: FSMContext):
         return
 
     for s in stations:
-        print(s['name'], message.text)
         if s['name'].lower() == message.text.lower():
 
             booking_data = create_booking(token, user_data['departure'], user_data['destination'], user_data['date'],
@@ -254,10 +253,14 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
 
             if t.status:
                 await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
+                callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+                await callback_cancel(query, callback_data)
                 return
 
             update_status(t.id, True)
             await query.answer('Отслеживание рейса возобновлено.', show_alert=True)
+            callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+            await callback_cancel(query, callback_data)
             return
 
     create_trip(

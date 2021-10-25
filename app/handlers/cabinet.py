@@ -102,8 +102,8 @@ async def cabinet_main_menu(message: types.Message, state: FSMContext):
         tickets.sort(key=lambda x: x['date'])
 
         if len(tickets) == 0:
-            if message.text.lower() == 'активные заявки':
-                await message.answer('Активные заявки не найдены.')
+            if message.text.lower() == 'активные поездки':
+                await message.answer('Активные поездки не найдены.')
             else:
                 await message.answer('Заявки в резерв не найдены.')
             return

@@ -97,3 +97,16 @@ def parse_archive(trip):
         message += f"\n<b>Место высадки:</b> {trip['station_2']['name']}"
 
     return message
+
+
+def parse_notification(departure: str, destination: str, date: str, time: str, places: int) -> str:
+    if places == 1:
+        message = "<b>Доступно одно место</b> "
+
+    else:
+        message = f"<b>Доступно {places} места</b> "
+
+    message += f"на рейс {departure} – {destination} " \
+               f"{datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')} в {time}."
+
+    return message

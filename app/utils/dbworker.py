@@ -2,6 +2,9 @@ from peewee import *
 
 from datetime import datetime
 
+from app.messages.formatter import parse_notification
+from app.utils.data_requests import get_trips
+
 database = SqliteDatabase('bot.db')
 
 
@@ -49,7 +52,8 @@ def get_user_trips(user_id, active=False):
         if not active:
             trips = Trip.select().where(Trip.user_id == user_id).order_by(Trip.date, Trip.time)
         else:
-            trips = Trip.select().where(Trip.user_id == user_id and Trip.status == True).order_by(Trip.date, Trip.time)
+            trips = Trip.select().where((Trip.user_id == user_id) & (Trip.status == True)) \
+                .order_by(Trip.date, Trip.time)
 
     database.close()
     return trips
@@ -64,3 +68,57 @@ def update_status(trip, status):
 
     database.close()
     return result
+
+
+def get_active_dates():
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        trips = Trip.select(Trip.date, Trip.departure, Trip.destination).distinct().where(Trip.status == True)
+
+    database.close()
+    return trips
+
+
+def check_active_records(date: str, departure: str, destination: str, time: str, places: int):
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        trips = Trip.select(Trip.id, Trip.user_id, Trip.places).where(
+            (Trip.date == date) & (Trip.time == time) & (Trip.status == True) & (Trip.departure == departure) &
+            (Trip.places <= places) & (Trip.destination == destination))
+
+    database.close()
+
+    return trips
+
+
+def check_trips():
+    messages = []
+
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        dates = Trip.select(Trip.date, Trip.departure, Trip.destination).distinct().where(Trip.status == True)
+
+    for item in dates:
+        trips = get_trips(item.date, item.departure, item.destination)
+
+        if trips is None:
+            continue
+
+        for trip in trips:
+            concurrences = Trip.select(Trip.id, Trip.user_id, Trip.places).where(
+                (Trip.date == trip['date']) & (Trip.time == trip['time']) & (Trip.status == True) & (
+                        Trip.departure == item.departure) &
+                (Trip.places <= trip['free_places']) & (Trip.destination == item.destination))
+
+            for c in concurrences:
+                messages.append((c.user_id, parse_notification(item.departure, item.destination, trip['date'],
+                                                               trip['time'], c.places)))
+
+            query = Trip.update({Trip.status: False, Trip.updated_at: datetime.now()}) \
+                .where(Trip.id << [c.id for c in concurrences])
+            query.execute()
+
+    return messages
