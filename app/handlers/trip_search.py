@@ -192,7 +192,8 @@ async def station_chosen(message: types.Message, state: FSMContext):
                 await message.answer(f'<b>Ошибка</b>. {booking_data["error"]}')
 
             else:
-                await message.answer('Бронирование успешно создано.')
+                await message.answer('Бронирование успешно создано.\n'
+                                     '<em>Надень в автобусе маску, пожалуйста.</em>')
 
             await start_trip_search(message, state)
             return
@@ -253,14 +254,24 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
 
             if t.status:
                 await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
-                callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
-                await callback_cancel(query, callback_data)
+
+                try:
+                    callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1
+                    await callback_cancel(query, callback_data)
+                except ValueError:
+                    await query.message.edit_reply_markup(reply_markup=None)
+
                 return
 
             update_status(t.id, True)
             await query.answer('Отслеживание рейса возобновлено.', show_alert=True)
-            callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
-            await callback_cancel(query, callback_data)
+
+            try:
+                callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1
+                await callback_cancel(query, callback_data)
+            except ValueError:
+                await query.message.edit_reply_markup(reply_markup=None)
+
             return
 
     create_trip(
@@ -273,8 +284,12 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
     )
 
     await query.answer('Рейс добавлен в отслеживаемые.', show_alert=True)
-    callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
-    await callback_cancel(query, callback_data)
+
+    try:
+        callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1  # not sure
+        await callback_cancel(query, callback_data)
+    except ValueError:
+        await query.message.edit_reply_markup(reply_markup=None)
 
 
 async def callback_booking_places(query: types.CallbackQuery, callback_data: dict, state: FSMContext):

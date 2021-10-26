@@ -62,14 +62,14 @@ async def cabinet_start(message: types.Message, state: FSMContext):
         await message.answer('<b>Ошибка.</b> Не удалось загрузить пользовательские данные.')
         return
 
-    text = "<b>Личный кабинет\n\nФамилия:</b> "
+    text = f"<b>Личный кабинет\n\nID пользователя:</b> {user_info['client_id']}\n<b>Фамилия:</b> "
 
     if user_info['fio'] is None:
-        text += 'не задана'
+        text += 'не задана\n\n<em>Без указания фамилии ты не сможешь бронировать и резервировать места.</em>'
     else:
         text += user_info['fio']
 
-    text += f"\n<b>ID пользователя:</b> {user_info['client_id']}"
+    # text += f"\n<b>ID пользователя:</b> {user_info['client_id']}"
 
     buttons = [[types.KeyboardButton('Активные поездки'), types.KeyboardButton('Резерв')],
                [types.KeyboardButton('Архив поездок'), types.KeyboardButton('Изменить фамилию')],

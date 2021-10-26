@@ -52,7 +52,13 @@ async def main_menu_handler(message: types.Message, state: FSMContext):
         await cabinet_start(message, state)
 
     elif message.text.lower() == 'информация о боте':
-        pass
+        await message.answer(
+            '<b>Добро пожаловать в MROYABOT версии 3.0!</b> Переписанный с нуля, гораздо более быстрый, '
+            'функциональный и красивый бот снова готов искать места в маршрутках на самое удобное для '
+            'тебя время!\n\nПолное описание обновления можно прочитать в нашем '
+            '<a href="tg://resolve?domain=mroyabotinfo">блоге</a>. Возвращаемся в главное меню.',
+            disable_web_page_preview=True)
+        await cmd_start(message, state)
 
 
 async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
@@ -78,7 +84,20 @@ async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
         await query.message.edit_text(query.message.parse_entities().split('\n\n<b>Ты')[0], reply_markup=keyboard)
 
 
+async def default_handler(message: types.Message, state: FSMContext):
+    await message.answer('<b>Добро пожаловать в MROYABOT версии 3.0!</b> Переписанный с нуля, гораздо более быстрый, '
+                         'функциональный и красивый бот снова готов искать места в маршрутках на самое удобное для '
+                         'тебя время!\n\nПолное описание обновления можно прочитать в нашем '
+                         '<a href="tg://resolve?domain=mroyabotinfo">блоге</a>. Возвращаемся в главное меню.',
+                         disable_web_page_preview=True)
+    await cmd_start(message, state)
+
+
 def register_handlers_common(dp: Dispatcher):
     dp.register_message_handler(cmd_start, commands="start", state="*")
     dp.register_message_handler(main_menu_handler, state=TripSearch.main_menu.state)
     dp.register_callback_query_handler(callback_unfollow, unfollow_cb.filter(), state="*")
+
+
+def register_default_handler(dp: Dispatcher):
+    dp.register_message_handler(default_handler, content_types=types.ContentTypes.TEXT, state="*")

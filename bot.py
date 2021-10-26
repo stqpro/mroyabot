@@ -7,10 +7,10 @@ from aiogram.types import BotCommand
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.utils.config_reader import load_config
-from app.handlers.common import register_handlers_common
+from app.handlers.common import register_handlers_common, register_default_handler
 from app.handlers.trip_search import register_handlers_trip_search, register_commands_trip_search
 from app.handlers.cabinet import register_handlers_cabinet, register_commands_cabinet
-from app.utils.dbworker import check_trips
+from app.utils.dbworker import check_trips, clear_trips
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,12 @@ async def send_notifications(bot: Bot):
     messages = check_trips()
 
     for m in messages:
-        await bot.send_message(m[0], m[1])
+        await bot.send_message(m[0], m[1], reply_markup=m[2])
 
 
 async def main():
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    logging.basicConfig(filename='log.txt', level=logging.WARNING, filemode='a',
+                        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     logger.info("Starting bot...")
 
     config = load_config('config/bot.ini')
@@ -49,9 +50,14 @@ async def main():
     register_handlers_common(dp)
     register_handlers_trip_search(dp)
     register_handlers_cabinet(dp)
+    register_default_handler(dp)
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_notifications, 'interval', (bot,), minutes=2)
+    scheduler.add_job(clear_trips, 'cron', minute=4)
+
+    logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING)
+
     scheduler.start()
 
     await dp.start_polling()

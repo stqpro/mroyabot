@@ -114,11 +114,29 @@ def check_trips():
                 (Trip.places <= trip['free_places']) & (Trip.destination == item.destination))
 
             for c in concurrences:
-                messages.append((c.user_id, parse_notification(item.departure, item.destination, trip['date'],
-                                                               trip['time'], c.places)))
+                messages.append((c.user_id, *parse_notification(item.departure, item.destination, trip['date'],
+                                                                trip['time'], c.places, trip['id'])))
 
             query = Trip.update({Trip.status: False, Trip.updated_at: datetime.now()}) \
                 .where(Trip.id << [c.id for c in concurrences])
             query.execute()
 
+    database.close()
+
     return messages
+
+
+def clear_trips():
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        times = Trip.select(Trip.date, Trip.time).distinct()
+
+        for t in times:
+            trip_time = datetime.strptime(f"{t.date} {t.time}", '%Y-%m-%d %H:%M')
+
+            if trip_time < datetime.now():
+                query = Trip.delete().where((Trip.date == t.date) & (Trip.time == t.time))
+                query.execute()
+
+    database.close()

@@ -10,6 +10,16 @@ weekdays = [
     'воскресенье'
 ]
 
+adapted_weekdays = [
+    'понедельник',
+    'вторник',
+    'среду',
+    'четверг',
+    'пятницу',
+    'субботу',
+    'воскресенье'
+]
+
 months = [
     'января',
     'февраля',
@@ -54,3 +64,8 @@ def parse_date_string(date_string: str):  # TODO: add more parsing items
             return (datetime.datetime.today() + datetime.timedelta(days=idx)).strftime('%Y-%m-%d')
 
     return None
+
+
+def generate_readable_date(date: str) -> str:
+    parsed_date = datetime.datetime.strptime(date, '%Y-%m-%d')
+    return f"{adapted_weekdays[parsed_date.weekday()]}, {parsed_date.day} {months[parsed_date.month - 1]}"

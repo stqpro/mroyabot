@@ -2,6 +2,10 @@ import datetime
 import logging
 
 from typing import Union, Dict, List
+from aiogram import types
+
+from app.utils.actions import Action
+from app.utils.date_strings import generate_readable_date
 
 logger = logging.getLogger(__name__)
 
@@ -99,14 +103,22 @@ def parse_archive(trip):
     return message
 
 
-def parse_notification(departure: str, destination: str, date: str, time: str, places: int) -> str:
+def parse_notification(departure: str, destination: str, date: str, time: str, places: int, trip_id: int):
     if places == 1:
         message = "<b>Доступно одно место</b> "
 
     else:
         message = f"<b>Доступно {places} места</b> "
 
-    message += f"на рейс {departure} – {destination} " \
-               f"{datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')} в {time}."
+    message += f"на рейс {departure} – {destination} в {generate_readable_date(date)}, в {time}."
 
-    return message
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    keyboard.add(types.InlineKeyboardButton('Забронировать',
+                                            callback_data=f"do|{Action.BOOKING_PLACES.value}|{departure}|{destination}"
+                                                          f"|{date}|{time}|{str(trip_id)}|{str(places)}"),
+                 types.InlineKeyboardButton('Продолжить отслеживание',
+                                            callback_data=f"do|{Action.FOLLOW_PLACES.value}|{departure}|{destination}"
+                                                          f"|{date}|{time}|{str(trip_id)}|{str(places)}")
+                 )
+
+    return message, keyboard
