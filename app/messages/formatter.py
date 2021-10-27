@@ -77,9 +77,14 @@ def parse_favourite(trip):
 def parse_active(trip):
     message = f"<b>Маршрут:</b> {trip['city_1']} – {trip['city_2']}\n\n" \
               f"<b>Дата:</b> {datetime.datetime.strptime(trip['date'], '%Y-%m-%d').strftime('%d/%m/%Y')}\n" \
-              f"<b>Время:</b> {trip['time']}\n<b>Стоимость проезда:</b> {trip['price']} BYN\n\n" \
-              f"{parse_car_info(trip['car'])}\n{parse_driver_info(trip['driver'])}"
+              f"<b>Время:</b> {trip['time']}\n\n<b>Стоимость проезда:</b> {trip['price']} BYN\n<b>Место посадки:</b> "
 
+    try:
+        message += trip['station_1']['name']
+    except KeyError:
+        message += 'не указано'
+
+    message += f"\n\n{parse_car_info(trip['car'])}\n{parse_driver_info(trip['driver'])}"
     return message
 
 

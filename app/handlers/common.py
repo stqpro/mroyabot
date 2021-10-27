@@ -4,7 +4,7 @@ from aiogram.utils.callback_data import CallbackData
 
 from app.handlers.trip_search import TripSearch, start_trip_search
 from app.handlers.cabinet import cabinet_start
-from app.utils.dbworker import get_user_trips, update_status
+from app.utils.dbworker import get_user_trips, update_trip
 from app.messages.formatter import parse_favourite
 
 
@@ -52,13 +52,14 @@ async def main_menu_handler(message: types.Message, state: FSMContext):
         await cabinet_start(message, state)
 
     elif message.text.lower() == 'информация о боте':
-        await message.answer(
-            '<b>Добро пожаловать в MROYABOT версии 3.0!</b> Переписанный с нуля, гораздо более быстрый, '
-            'функциональный и красивый бот снова готов искать места в маршрутках на самое удобное для '
-            'тебя время!\n\nПолное описание обновления можно прочитать в нашем '
-            '<a href="tg://resolve?domain=mroyabotinfo">блоге</a>. Возвращаемся в главное меню.',
-            disable_web_page_preview=True)
-        await cmd_start(message, state)
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
+        keyboard.add(types.InlineKeyboardButton('Вся информация',
+                                                url='https://telegra.ph/Vsya-informaciya-pro-MROYABOT-10-27'),
+                     types.InlineKeyboardButton('Блог разработки', url='tg://resolve?domain=mroyabotinfo'))
+        await message.answer("<b>MROYABOT</b> – это независимый чат-бот, который умеет оповещать об освободившихся "
+                             "местах на нужные маршрутки сервиса znami.by, а также позволяет производить "
+                             "бронирование и резервирование мест и управлять аккаунтом прямо из чата.",
+                             reply_markup=keyboard, disable_web_page_preview=True)
 
 
 async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
@@ -73,7 +74,7 @@ async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
                                       f"<b>Ты точно хочешь удалить рейс из отслеживаемых?</b>", reply_markup=keyboard)
 
     elif callback_data['confirm'] == 'yes':
-        print(update_status(callback_data['id'], False))
+        print(update_trip(callback_data['id'], False))
         await query.message.edit_text('Рейс удален из отслеживаемых.', reply_markup=None)
 
     elif callback_data['confirm'] == 'cancel':
@@ -82,6 +83,8 @@ async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
             types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=callback_data['id'], confirm='no')))
 
         await query.message.edit_text(query.message.parse_entities().split('\n\n<b>Ты')[0], reply_markup=keyboard)
+
+    await query.answer()
 
 
 async def default_handler(message: types.Message, state: FSMContext):

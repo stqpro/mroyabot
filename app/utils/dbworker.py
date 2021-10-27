@@ -59,11 +59,15 @@ def get_user_trips(user_id, active=False):
     return trips
 
 
-def update_status(trip, status):
+def update_trip(trip, status, places=None):
     database.connect(reuse_if_open=True)
 
     with database.atomic():
-        query = Trip.update({Trip.status: status, Trip.updated_at: datetime.now()}).where(Trip.id == trip)
+        if not places:
+            query = Trip.update({Trip.status: status, Trip.updated_at: datetime.now()}).where(Trip.id == trip)
+        else:
+            query = Trip.update({Trip.status: status, Trip.places: places, Trip.updated_at: datetime.now()})\
+                .where(Trip.id == trip)
         result = query.execute()
 
     database.close()

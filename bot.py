@@ -32,7 +32,7 @@ async def send_notifications(bot: Bot):
 
 
 async def main():
-    logging.basicConfig(filename='log.txt', level=logging.WARNING, filemode='a',
+    logging.basicConfig(filename='log.txt', level=logging.INFO, filemode='a',
                         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     logger.info("Starting bot...")
 
@@ -56,7 +56,7 @@ async def main():
     scheduler.add_job(send_notifications, 'interval', (bot,), minutes=2)
     scheduler.add_job(clear_trips, 'cron', minute=4)
 
-    logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING)
+    # logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING)
 
     scheduler.start()
 

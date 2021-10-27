@@ -10,7 +10,7 @@ from app.utils.data_requests import get_directions, get_trips, create_reserve, g
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
-from app.utils.dbworker import create_trip, get_user_trips, update_status
+from app.utils.dbworker import create_trip, get_user_trips, update_trip
 
 request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 
@@ -252,18 +252,24 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
                 and t.date == callback_data['date'] \
                 and t.time == callback_data['time']:
 
-            if t.status:
-                await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
+            if t.places == int(callback_data['places']):
+                updated_places = None
 
-                try:
-                    callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1
-                    await callback_cancel(query, callback_data)
-                except ValueError:
-                    await query.message.edit_reply_markup(reply_markup=None)
+                if t.status:
+                    await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
 
-                return
+                    try:
+                        callback_data['places'] = int(query.message.reply_markup.inline_keyboard[0][0]['text']) - 1
+                        await callback_cancel(query, callback_data)
+                    except ValueError:
+                        await query.message.edit_reply_markup(reply_markup=None)
 
-            update_status(t.id, True)
+                    return
+
+            else:
+                updated_places = callback_data['places']
+
+            update_trip(t.id, True, updated_places)
             await query.answer('Отслеживание рейса возобновлено.', show_alert=True)
 
             try:
@@ -344,8 +350,14 @@ async def callback_reserve_places(query: types.CallbackQuery, callback_data: dic
 
 
 async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
-    callback_data.pop('@')
-    callback_data.pop('action')
+    print(callback_data)
+
+    try:
+        callback_data.pop('@')
+        callback_data.pop('action')
+    except KeyError:
+        pass
+
     keyboard = types.InlineKeyboardMarkup()
 
     if int(callback_data['places']) < 4:
@@ -360,6 +372,8 @@ async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
 
     await query.answer()
     await query.message.edit_reply_markup(keyboard)
+
+    return
 
 
 def register_commands_trip_search(dp: Dispatcher):
