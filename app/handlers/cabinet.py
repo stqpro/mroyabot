@@ -69,8 +69,6 @@ async def cabinet_start(message: types.Message, state: FSMContext):
     else:
         text += user_info['fio']
 
-    # text += f"\n<b>ID пользователя:</b> {user_info['client_id']}"
-
     buttons = [[types.KeyboardButton('Активные поездки'), types.KeyboardButton('Резерв')],
                [types.KeyboardButton('Архив поездок'), types.KeyboardButton('Изменить фамилию')],
                [types.KeyboardButton('Выход из профиля')]]

@@ -144,3 +144,15 @@ def clear_trips():
                 query.execute()
 
     database.close()
+
+
+def get_stats():
+    database.connect(reuse_if_open=True)
+
+    with database.atomic():
+        unique_users = Trip.select(Trip.user_id).distinct().count()
+        active_followings = Trip.select().where(Trip.status == True).count()
+
+    database.close()
+
+    return unique_users, active_followings

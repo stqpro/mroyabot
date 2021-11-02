@@ -146,7 +146,7 @@ def get_tickets(token, mode):
         return None
 
     if mode == 'booking':
-        return [t for t in tickets_data['tickets'] if t['status'] == 1 and t['closed'] == 0]
+        return [t for t in tickets_data['tickets'] if t['status'] in [1, 2] and t['closed'] == 0]
 
     if mode == 'reserve':
         return [t for t in tickets_data['tickets'] if t['status'] == 5 and t['closed'] == 0]

@@ -57,8 +57,7 @@ def parse_trips_info(trips: List[Dict], direction: str) -> List[Dict]:
     result = []
 
     for t in trips:
-        result.append({'message': f"{message}<b>Свободных мест:</b> {t['free_places']}\n\n"
-                                  f"{parse_car_info(t['car'])}\n{parse_driver_info(t['driver'])}",
+        result.append({'message': f"{message}<b>Свободных мест:</b> {t['free_places']}\n\n{parse_car_info(t['car'])}",
                        'places': t['free_places'],
                        'id': t['id']})
 
@@ -81,7 +80,7 @@ def parse_active(trip):
 
     try:
         message += trip['station_1']['name']
-    except KeyError:
+    except (TypeError, KeyError):
         message += 'не указано'
 
     message += f"\n\n{parse_car_info(trip['car'])}\n{parse_driver_info(trip['driver'])}"

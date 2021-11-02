@@ -7,7 +7,7 @@ from aiogram.types import BotCommand
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.utils.config_reader import load_config
-from app.handlers.common import register_handlers_common, register_default_handler
+from app.handlers.common import register_handlers_common, register_default_handler, register_stats_handler
 from app.handlers.trip_search import register_handlers_trip_search, register_commands_trip_search
 from app.handlers.cabinet import register_handlers_cabinet, register_commands_cabinet
 from app.utils.dbworker import check_trips, clear_trips
@@ -19,6 +19,7 @@ async def set_commands(bot: Bot):
     commands = [
         BotCommand(command="/start", description="главное меню"),
         BotCommand(command="/find", description="поиск рейсов"),
+        BotCommand(command="/following", description="отслеживаемые рейсы"),
         BotCommand(command="/account", description="личный кабинет")
     ]
     await bot.set_my_commands(commands)
@@ -32,14 +33,14 @@ async def send_notifications(bot: Bot):
 
 
 async def main():
-    logging.basicConfig(filename='log.txt', level=logging.INFO, filemode='a',
+    logging.basicConfig(filename='log.txt', level=logging.WARN, filemode='a',
                         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     logger.info("Starting bot...")
 
     config = load_config('config/bot.ini')
 
     bot = Bot(token=config.telegram_bot.token, parse_mode='HTML')
-    storage = RedisStorage2(db=0)
+    storage = RedisStorage2(db=0, prefix='mb')
     dp = Dispatcher(bot=bot, storage=storage)
 
     await set_commands(bot)
@@ -47,16 +48,17 @@ async def main():
     register_commands_trip_search(dp)
     register_commands_cabinet(dp)
 
+    register_stats_handler(dp, config.telegram_bot.admin_id)
+
     register_handlers_common(dp)
     register_handlers_trip_search(dp)
     register_handlers_cabinet(dp)
+
     register_default_handler(dp)
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_notifications, 'interval', (bot,), minutes=2)
     scheduler.add_job(clear_trips, 'cron', minute=4)
-
-    # logging.getLogger('apscheduler.executors.default').setLevel(logging.WARNING)
 
     scheduler.start()
 

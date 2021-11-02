@@ -4,7 +4,7 @@ from aiogram.utils.callback_data import CallbackData
 
 from app.handlers.trip_search import TripSearch, start_trip_search
 from app.handlers.cabinet import cabinet_start
-from app.utils.dbworker import get_user_trips, update_trip
+from app.utils.dbworker import get_user_trips, update_trip, get_stats
 from app.messages.formatter import parse_favourite
 
 
@@ -33,20 +33,26 @@ async def cmd_start(message: types.Message, state: FSMContext):
                                                                 input_field_placeholder='Главное меню'))
 
 
+async def cmd_following(message: types.Message):
+    trips = get_user_trips(message.chat.id, active=True)
+
+    if len(trips) == 0:
+        await message.answer('Отслеживаемые рейсы не найдены.')
+
+    for t in trips:
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=t.id, confirm='no')))
+        await message.answer(parse_favourite(t), reply_markup=keyboard)
+
+    return
+
+
 async def main_menu_handler(message: types.Message, state: FSMContext):
     if message.text.lower() == 'поиск рейсов':
         await start_trip_search(message, state)
 
     elif message.text.lower() == 'отслеживание':
-        trips = get_user_trips(message.chat.id, active=True)
-
-        if len(trips) == 0:
-            await message.answer('Отслеживаемые рейсы не найдены.')
-
-        for t in trips:
-            keyboard = types.InlineKeyboardMarkup()
-            keyboard.add(types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=t.id, confirm='no')))
-            await message.answer(parse_favourite(t), reply_markup=keyboard)
+        await cmd_following(message)
 
     elif message.text.lower() == 'личный кабинет':
         await cabinet_start(message, state)
@@ -87,6 +93,11 @@ async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
     await query.answer()
 
 
+async def get_bot_stats(message: types.Message):
+    unique_users, active_followings = get_stats()
+    await message.answer(f"<b>Активных отслеживаний:</b> {active_followings}\n<b>Пользователей:</b> {unique_users}")
+
+
 async def default_handler(message: types.Message, state: FSMContext):
     await message.answer('<b>Добро пожаловать в MROYABOT версии 3.0!</b> Переписанный с нуля, гораздо более быстрый, '
                          'функциональный и красивый бот снова готов искать места в маршрутках на самое удобное для '
@@ -98,8 +109,13 @@ async def default_handler(message: types.Message, state: FSMContext):
 
 def register_handlers_common(dp: Dispatcher):
     dp.register_message_handler(cmd_start, commands="start", state="*")
+    dp.register_message_handler(cmd_following, commands="following", state="*")
     dp.register_message_handler(main_menu_handler, state=TripSearch.main_menu.state)
     dp.register_callback_query_handler(callback_unfollow, unfollow_cb.filter(), state="*")
+
+
+def register_stats_handler(dp: Dispatcher, admin_id):
+    dp.register_message_handler(get_bot_stats, lambda msg: msg.chat.id == admin_id, commands="stats", state="*")
 
 
 def register_default_handler(dp: Dispatcher):
