@@ -4,9 +4,8 @@ from aiogram.utils.callback_data import CallbackData
 
 from app.handlers.trip_search import TripSearch, start_trip_search
 from app.handlers.cabinet import cabinet_start
-from app.utils.dbworker import get_user_trips, update_trip, get_stats
-from app.messages.formatter import parse_favourite
-
+from app.utils.dbworker import get_user_trips, update_trip, get_stats, get_user_dates, delete_record
+from app.messages.formatter import parse_favourite, parse_favourite_date
 
 unfollow_cb = CallbackData('unfollow', 'id', 'confirm')
 
@@ -35,14 +34,23 @@ async def cmd_start(message: types.Message, state: FSMContext):
 
 async def cmd_following(message: types.Message):
     trips = get_user_trips(message.chat.id, active=True)
+    dates = get_user_dates(message.chat.id)
 
-    if len(trips) == 0:
-        await message.answer('Отслеживаемые рейсы не найдены.')
+    if len(dates) == 0 and len(trips) == 0:
+        await message.answer('Отслеживаемые рейсы и даты не найдены.')
+        return
 
-    for t in trips:
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=t.id, confirm='no')))
-        await message.answer(parse_favourite(t), reply_markup=keyboard)
+    if len(dates) > 0:
+        for d in dates:
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=d.id, confirm='date')))
+            await message.answer(parse_favourite_date(d), reply_markup=keyboard)
+
+    if len(trips) > 0:
+        for t in trips:
+            keyboard = types.InlineKeyboardMarkup()
+            keyboard.add(types.InlineKeyboardButton('Удалить', callback_data=unfollow_cb.new(id=t.id, confirm='no')))
+            await message.answer(parse_favourite(t), reply_markup=keyboard)
 
     return
 
@@ -80,8 +88,12 @@ async def callback_unfollow(query: types.CallbackQuery, callback_data: dict):
                                       f"<b>Ты точно хочешь удалить рейс из отслеживаемых?</b>", reply_markup=keyboard)
 
     elif callback_data['confirm'] == 'yes':
-        print(update_trip(callback_data['id'], False))
+        update_trip(callback_data['id'], False)
         await query.message.edit_text('Рейс удален из отслеживаемых.', reply_markup=None)
+
+    elif callback_data['confirm'] == 'date':  # without confirmation
+        delete_record(callback_data['id'])
+        await query.message.edit_text('Дата удалена из отслеживаемых.', reply_markup=None)
 
     elif callback_data['confirm'] == 'cancel':
         keyboard = types.InlineKeyboardMarkup()

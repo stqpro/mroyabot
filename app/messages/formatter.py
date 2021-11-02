@@ -126,3 +126,14 @@ def parse_notification(departure: str, destination: str, date: str, time: str, p
                  )
 
     return message, keyboard
+
+
+def parse_date_notification(date, departure, destination):
+    return f"<b>Открыто бронирование</b> мест на рейс {departure} – {destination} на " \
+           f"{generate_readable_date(date)}."
+
+
+def parse_favourite_date(date):
+    return f"Ожидается открытие бронирования:\n\n" \
+           f"<b>Маршрут:</b> {date.departure} – {date.destination}\n" \
+           f"<b>Дата:</b> {datetime.datetime.strptime(date.date, '%Y-%m-%d').strftime('%d/%m/%Y')}"

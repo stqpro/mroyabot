@@ -10,7 +10,7 @@ from app.utils.config_reader import load_config
 from app.handlers.common import register_handlers_common, register_default_handler, register_stats_handler
 from app.handlers.trip_search import register_handlers_trip_search, register_commands_trip_search
 from app.handlers.cabinet import register_handlers_cabinet, register_commands_cabinet
-from app.utils.dbworker import check_trips, clear_trips
+from app.utils.dbworker import check_trips, clear_trips, check_dates
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,15 @@ async def send_notifications(bot: Bot):
         await bot.send_message(m[0], m[1], reply_markup=m[2])
 
 
+async def check_following_dates(bot: Bot):
+    messages = check_dates()
+
+    for m in messages:
+        await bot.send_message(m[0], m[1])
+
+
 async def main():
-    logging.basicConfig(filename='log.txt', level=logging.WARN, filemode='a',
+    logging.basicConfig(filename='log.txt',level=logging.WARN, filemode='a',
                         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     logger.info("Starting bot...")
 
@@ -58,6 +65,7 @@ async def main():
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_notifications, 'interval', (bot,), minutes=2)
+    scheduler.add_job(check_following_dates, 'interval', (bot,), minutes=20)
     scheduler.add_job(clear_trips, 'cron', minute=4)
 
     scheduler.start()

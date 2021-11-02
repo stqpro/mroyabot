@@ -1,4 +1,5 @@
 import datetime
+import re
 
 weekdays = [
     'понедельник',
@@ -47,7 +48,7 @@ def generate_date_strings(offset=2, length=15):
     return dates
 
 
-def parse_date_string(date_string: str):  # TODO: add more parsing items
+def parse_date_string(date_string: str):
     if date_string.lower() == 'сегодня':
         return datetime.datetime.today().strftime('%Y-%m-%d')
 
@@ -62,6 +63,33 @@ def parse_date_string(date_string: str):  # TODO: add more parsing items
     for idx, date in enumerate(dates):
         if date_string.lower() == date:
             return (datetime.datetime.today() + datetime.timedelta(days=idx)).strftime('%Y-%m-%d')
+
+    formats_with_year = ['%d/%m/%y', '%d/%m/%Y', '%d.%m.%y', '%d.%m.%Y', '%d-%m-%y', '%d-%m-%Y']
+
+    for fmt in formats_with_year:
+        try:
+            parsed_date = datetime.datetime.strptime(date_string, fmt)
+            if -2 < (parsed_date - datetime.datetime.today()).days < 30:  # today .. 30 days
+                return parsed_date.strftime('%Y-%m-%d')
+
+        except ValueError:
+            pass
+
+    formats_without_year = ['%d/%m', '%d.%m', '%d-%m']
+
+    for fmt in formats_without_year:
+        try:
+            parsed_date = datetime.datetime.strptime(date_string, fmt).replace(year=datetime.datetime.today().year)
+            if -2 < (parsed_date - datetime.datetime.today()).days < 30:  # today .. 30 days
+                return parsed_date.strftime('%Y-%m-%d')
+            else:
+                parsed_date = datetime.datetime.strptime(date_string, fmt)\
+                    .replace(year=datetime.datetime.today().year + 1)
+                if -2 < (parsed_date - datetime.datetime.today()).days < 30:  # today .. 30 days
+                    return parsed_date.strftime('%Y-%m-%d')
+
+        except ValueError:
+            pass
 
     return None
 

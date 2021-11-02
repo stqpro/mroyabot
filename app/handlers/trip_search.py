@@ -1,5 +1,3 @@
-import re
-
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -10,7 +8,7 @@ from app.utils.data_requests import get_directions, get_trips, create_reserve, g
 from app.utils.date_strings import *
 from app.messages.formatter import parse_trips_info
 from app.utils.actions import Action
-from app.utils.dbworker import create_trip, get_user_trips, update_trip
+from app.utils.dbworker import create_trip, get_user_trips, update_trip, get_user_dates, create_user_date
 
 request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 
@@ -90,7 +88,18 @@ async def date_chosen(message: types.Message, state: FSMContext):
         return
 
     if len(trips) == 0:
-        await message.answer('В выбранный день рейсы не найдены.')
+        keyboard = types.InlineKeyboardMarkup()
+        button_data = request_cb.new(
+            action=Action.FOLLOW_DATE.value,
+            departure=user_data['departure'],
+            destination=user_data['destination'],
+            date=parsed_date,
+            time='-',
+            id='-',
+            places='-'
+        )
+        keyboard.add(types.InlineKeyboardButton('Отслеживать дату', callback_data=button_data))
+        await message.answer('В выбранный день рейсы не найдены.', reply_markup=keyboard)
         return
 
     merged_trips = {}
@@ -242,7 +251,7 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
 
     user_trips = get_user_trips(query.message.chat.id)
 
-    if len([t for t in user_trips if t.status]) > 6:
+    if len([t for t in user_trips if t.status == 1]) > 6:
         await query.answer('Ты можешь отслеживать не более семи рейсов.', show_alert=True)
         return
 
@@ -255,7 +264,7 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
             if t.places == int(callback_data['places']):
                 updated_places = None
 
-                if t.status:
+                if t.status == 1:
                     await query.answer('Ты уже отслеживаешь этот рейс.', show_alert=True)
 
                     try:
@@ -376,6 +385,33 @@ async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
     return
 
 
+async def callback_follow_date(query: types.CallbackQuery, callback_data: dict):
+    dates = get_user_dates(query.message.chat.id)
+
+    if len(dates) > 2:
+        await query.answer('Ты можешь отслеживать не более трёх дат.', show_alert=True)
+        return
+
+    for d in dates:
+        if d.date == callback_data['date'] \
+                and d.departure == callback_data['departure'] \
+                and d.destination == callback_data['destination']:
+            await query.message.edit_reply_markup(None)
+            await query.answer('Ты уже отслеживаешь эту дату.', show_alert=True)
+            return
+
+    create_user_date(query.message.chat.id, callback_data['date'],
+                     callback_data['departure'], callback_data['destination'])
+
+    await query.answer()
+    await query.message.edit_text('<b>Отслеживание создано.</b> Когда на эту дату откроется бронирование, '
+                                  'ты получишь уведомление.', reply_markup=None)
+
+    return
+
+
+
+
 def register_commands_trip_search(dp: Dispatcher):
     dp.register_message_handler(start_trip_search, commands="find", state='*')
 
@@ -397,4 +433,6 @@ def register_handlers_trip_search(dp: Dispatcher):
     dp.register_callback_query_handler(callback_reserve_places, request_cb.filter(action=Action.RESERVE_PLACES.value),
                                        state="*")
     dp.register_callback_query_handler(callback_booking_places, request_cb.filter(action=Action.BOOKING_PLACES.value),
+                                       state="*")
+    dp.register_callback_query_handler(callback_follow_date, request_cb.filter(action=Action.FOLLOW_DATE.value),
                                        state="*")

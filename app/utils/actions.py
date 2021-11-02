@@ -9,3 +9,4 @@ class Action(Enum):
     BOOKING_START = '4'
     BOOKING_PLACES = '5'
     CANCEL = '6'
+    FOLLOW_DATE = '7'
