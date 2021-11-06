@@ -64,9 +64,9 @@ async def main():
     register_default_handler(dp)
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_notifications, 'interval', (bot,), minutes=2)
-    scheduler.add_job(check_following_dates, 'interval', (bot,), minutes=20)
-    scheduler.add_job(clear_trips, 'cron', minute=4)
+    scheduler.add_job(send_notifications, 'interval', (bot,), minutes=3)
+    scheduler.add_job(check_following_dates, 'cron', (bot,), minute='5,35', misfire_grace_time=None)
+    scheduler.add_job(clear_trips, 'cron', minute=4, misfire_grace_time=None)
 
     scheduler.start()
 

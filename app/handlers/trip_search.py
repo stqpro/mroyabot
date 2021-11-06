@@ -59,9 +59,14 @@ async def direction_chosen(message: types.Message, state: FSMContext):
     keyboard.row('сегодня', 'завтра')
     keyboard.add(*generate_date_strings(offset=2, length=13), 'Назад')
 
+    text = 'Выбери дату поездки из списка или введи вручную в одном из следующих форматов:\n' \
+           '<em>ДД.ММ.ГГГГ, ДД/ММ/ГГГГ, ДД-ММ-ГГГГ.</em>\n\nЕсли на указанную дату бронирование ещё не началось, ' \
+           'можно включить <b>отслеживание даты</b>, и как только бронирование откроется, ты получишь уведомление ' \
+           '<em>(работает с датами, до которых не более 30 дней)</em>.'
+
     await state.update_data(departure=departure, destination=destination)
     await TripSearch.date.set()
-    await message.answer('Выбери дату поездки.', reply_markup=keyboard)
+    await message.answer(text, reply_markup=keyboard)
 
 
 async def date_chosen(message: types.Message, state: FSMContext):
@@ -168,7 +173,7 @@ async def time_chosen(message: types.Message, state: FSMContext):
 
 async def station_chosen(message: types.Message, state: FSMContext):
     if message.text.lower() == 'отменить':
-        await message.answer('Бронирование отменено.')
+        await message.answer('Бронирование отменено. Возвращаемся к поиску рейсов.')
         await start_trip_search(message, state)
         return
 
@@ -176,7 +181,8 @@ async def station_chosen(message: types.Message, state: FSMContext):
 
     if token is None:
         await message.answer('<b>Ошибка.</b> Бронирование доступно только авторизованным пользователям. '
-                             'Пройди авторизацию в личном кабинете (/account).')
+                             'Пройди авторизацию в личном кабинете (/account).\n\n'
+                             'Возвращаемся к поиску рейсов.')
         await start_trip_search(message, state)
         return
 
@@ -184,7 +190,7 @@ async def station_chosen(message: types.Message, state: FSMContext):
     stations = get_stations(user_data['departure'], user_data['destination'])
 
     if stations is None:
-        await message.answer('<b>Ошибка</b>. Не удалось обработать сообщение.')
+        await message.answer('<b>Ошибка</b>. Не удалось обработать сообщение.\n\nВозвращаемся к поиску рейсов.')
         await start_trip_search(message, state)
         return
 
@@ -201,8 +207,8 @@ async def station_chosen(message: types.Message, state: FSMContext):
                 await message.answer(f'<b>Ошибка</b>. {booking_data["error"]}')
 
             else:
-                await message.answer('Бронирование успешно создано.\n'
-                                     '<em>Надень в автобусе маску, пожалуйста.</em>')
+                await message.answer('Бронирование успешно создано.\n<em>Надень в автобусе маску, пожалуйста.</em>\n\n'
+                                     'Возвращаемся к поиску рейсов.')
 
             await start_trip_search(message, state)
             return
@@ -408,8 +414,6 @@ async def callback_follow_date(query: types.CallbackQuery, callback_data: dict):
                                   'ты получишь уведомление.', reply_markup=None)
 
     return
-
-
 
 
 def register_commands_trip_search(dp: Dispatcher):

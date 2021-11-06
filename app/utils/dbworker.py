@@ -142,6 +142,9 @@ def check_dates():
         if trips is None:
             continue
 
+        if len(trips) == 0:
+            continue
+
         users = Trip.select(Trip.user_id).where((Trip.status == 2) & (Trip.date == item.date) &
                                                 (Trip.departure == item.departure) &
                                                 (Trip.destination == item.destination))

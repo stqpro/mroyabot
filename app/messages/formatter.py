@@ -129,7 +129,7 @@ def parse_notification(departure: str, destination: str, date: str, time: str, p
 
 
 def parse_date_notification(date, departure, destination):
-    return f"<b>Открыто бронирование</b> мест на рейс {departure} – {destination} на " \
+    return f"<b>Открыто бронирование</b> мест на маршрут {departure} – {destination} на " \
            f"{generate_readable_date(date)}."
 
 
