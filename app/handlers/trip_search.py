@@ -257,8 +257,8 @@ async def callback_follow_places(query: types.CallbackQuery, callback_data: dict
 
     user_trips = get_user_trips(query.message.chat.id)
 
-    if len([t for t in user_trips if t.status == 1]) > 6:
-        await query.answer('Ты можешь отслеживать не более семи рейсов.', show_alert=True)
+    if len([t for t in user_trips if t.status == 1]) > 14:
+        await query.answer('Ты можешь отслеживать не более 15 рейсов.', show_alert=True)
         return
 
     for t in user_trips:
