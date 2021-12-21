@@ -2,6 +2,7 @@ import logging
 import requests
 
 logger = logging.getLogger(__name__)
+base_url = 'http://znami.ru'
 
 
 def get_direction_name(city_1, city_2):
@@ -9,7 +10,7 @@ def get_direction_name(city_1, city_2):
 
 
 def get_directions():
-    response = requests.get('https://znami.by/cities.get')
+    response = requests.get(base_url + '/cities.get')
 
     if response.status_code != 200:
         logger.error('Unable to get cities data.')
@@ -30,7 +31,7 @@ def get_directions():
 
 
 def get_trips(date: str, city_1: str, city_2: str, time=None):
-    response = requests.get('https://znami.by/trips.get', params={'date': date, 'city_1': city_1, 'city_2': city_2})
+    response = requests.get(base_url + '/trips.get', params={'date': date, 'city_1': city_1, 'city_2': city_2})
 
     if response.status_code != 200:
         logger.error('Unable to get cities data.')
@@ -49,7 +50,7 @@ def get_trips(date: str, city_1: str, city_2: str, time=None):
 
 
 def send_code(phone):
-    response = requests.post('https://znami.by/api/confirm.send', json={'phone': phone})
+    response = requests.post(base_url + '/api/confirm.send', json={'phone': phone})
 
     if response.status_code != 200:
         logger.error('Unable to send SMS.')
@@ -65,7 +66,7 @@ def send_code(phone):
 
 
 def check_code(confirm_id, code):
-    response = requests.post('https://znami.by/api/confirm.check', json={'confirm_id': confirm_id, 'code': code})
+    response = requests.post(base_url + '/api/confirm.check', json={'confirm_id': confirm_id, 'code': code})
 
     if response.status_code != 200:
         logger.error('Unable to check code.')
@@ -84,7 +85,7 @@ def create_booking(token, departure, destination, date, time, places, trip_id, s
         return {'status': 'false', 'error': 'Для бронирования рейсов необходимо указать фамилию в личном кабинете. '
                                             '(/account).'}
 
-    response = requests.post('https://znami.by/api/ticket.create',
+    response = requests.post(base_url + '/api/ticket.create',
                              json={'personal_token': token, 'city_1': departure, 'city_2': destination, 'date': date,
                                    'time': time, 'places': places, 'trip_id': trip_id, 'station_id': station,
                                    'fio': user_info['fio']})
@@ -106,7 +107,7 @@ def create_reserve(token, trip, places):
         return {'status': 'false', 'error': 'Для резервирования рейсов необходимо указать фамилию в личном кабинете. '
                                             '(/account).'}
 
-    response = requests.post('https://znami.by/api/reserve.create',
+    response = requests.post(base_url + '/api/reserve.create',
                              json={'personal_token': token, 'trip_id': trip, 'places': places, 'fio': user_info['fio']})
 
     if response.status_code != 200:
@@ -117,7 +118,7 @@ def create_reserve(token, trip, places):
 
 
 def get_user(token):
-    response = requests.get('https://znami.by/api/user.check', params={'personal_token': token})
+    response = requests.get(base_url + '/api/user.check', params={'personal_token': token})
 
     if response.status_code != 200:
         logger.error('Unable to get user info.')
@@ -133,7 +134,7 @@ def get_user(token):
 
 
 def get_tickets(token, mode):
-    response = requests.get('https://znami.by/api/tickets.get', params={'personal_token': token})
+    response = requests.get(base_url + '/api/tickets.get', params={'personal_token': token})
 
     if response.status_code != 200:
         logger.error('Unable to get users tickets.')
@@ -157,9 +158,9 @@ def get_tickets(token, mode):
 
 def cancel_trip(mode: str, ticket_id: int, token):
     if mode == 'booking':
-        url = 'https://znami.by/api/ticket.cancel'
+        url = base_url + '/api/ticket.cancel'
     else:
-        url = 'https://znami.by/api/reserve.cancel'
+        url = base_url + '/api/reserve.cancel'
 
     response = requests.post(url, params={'personal_token': token, 'ticket_id': ticket_id})
 
@@ -171,7 +172,7 @@ def cancel_trip(mode: str, ticket_id: int, token):
 
 
 def get_stations(departure, destination):
-    response = requests.get('https://znami.by/trips.get', params={'city_1': departure, 'city_2': destination})
+    response = requests.get(base_url + '/trips.get', params={'city_1': departure, 'city_2': destination})
 
     if response.status_code != 200:
         logger.error('Unable to get stations list.')
@@ -187,7 +188,7 @@ def get_stations(departure, destination):
 
 
 def update_last_name(last_name, token):
-    response = requests.post('https://znami.by/api/user.update', params={'fio': last_name, 'personal_token': token})
+    response = requests.post(base_url + '/api/user.update', params={'fio': last_name, 'personal_token': token})
 
     if response.status_code != 200:
         logger.error('Unable to update users last name.')

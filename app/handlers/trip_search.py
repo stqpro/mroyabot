@@ -365,8 +365,6 @@ async def callback_reserve_places(query: types.CallbackQuery, callback_data: dic
 
 
 async def callback_cancel(query: types.CallbackQuery, callback_data: dict):
-    print(callback_data)
-
     try:
         callback_data.pop('@')
         callback_data.pop('action')
