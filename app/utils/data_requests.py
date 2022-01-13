@@ -2,7 +2,7 @@ import logging
 import requests
 
 logger = logging.getLogger(__name__)
-base_url = 'http://znami.ru'
+base_url = 'https://znami.by'
 
 
 def get_direction_name(city_1, city_2):
@@ -25,9 +25,20 @@ def get_directions():
     directions = []
 
     for c in cities_data['cities']:
-        [directions.append(x) for x in list(map(lambda p: get_direction_name(c['name'], p), c['cities']))]
+        [directions.append(x) for x in list(map(lambda p: [c['name'], p], c['cities']))]
 
-    return directions
+    sorted_directions = []
+
+    for d in directions:
+        tmp = [d[1], d[0]]
+
+        if d not in sorted_directions:
+            sorted_directions.append(d)
+
+        if (tmp in directions) and (tmp not in sorted_directions):
+            sorted_directions.append(tmp)
+
+    return list(map(lambda p: get_direction_name(p[0], p[1]), sorted_directions))
 
 
 def get_trips(date: str, city_1: str, city_2: str, time=None):
