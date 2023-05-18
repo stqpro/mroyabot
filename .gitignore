@@ -1,7 +1,8 @@
 /venv/
 /redis-data/
 /web/config/
-/log.txt
+/web/log.txt
 /bot.db
 /.idea/
 __pycache__
+log.txt
