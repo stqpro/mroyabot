@@ -1,0 +1,216 @@
+2023-05-18 20:46:59,469 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001768FE3E980>
+2023-05-18 20:46:59,469 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x000001768FE275E0>, 458439.046)]']
+connector: <aiohttp.connector.TCPConnector object at 0x000001768FE3E890>
+2023-05-18 20:46:59,470 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000001768FE3EE00>
+transport: <_ProactorSocketTransport fd=960 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:47:50,116 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001DA2927E980>
+2023-05-18 20:47:50,117 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x000001DA292675E0>, 458489.562)]']
+connector: <aiohttp.connector.TCPConnector object at 0x000001DA2927E890>
+2023-05-18 20:47:50,117 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000001DA2927EE00>
+transport: <_ProactorSocketTransport fd=696 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:50:17,415 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000002772161E8F0>
+2023-05-18 20:50:17,415 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x00000277216075E0>, 458636.859)]']
+connector: <aiohttp.connector.TCPConnector object at 0x000002772161E800>
+2023-05-18 20:50:17,416 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000002772161ED70>
+transport: <_ProactorSocketTransport fd=772 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:53:03,171 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x0000017D7B04E950>
+2023-05-18 20:53:03,171 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x0000017D7B0375E0>, 458802.64)]']
+connector: <aiohttp.connector.TCPConnector object at 0x0000017D7B04E860>
+2023-05-18 20:53:03,171 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x0000017D7B04EDD0>
+transport: <_ProactorSocketTransport fd=644 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:55:05,008 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x00000230AF22E920>
+2023-05-18 20:55:05,008 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x00000230AF217580>, 458924.468)]']
+connector: <aiohttp.connector.TCPConnector object at 0x00000230AF22E830>
+2023-05-18 20:55:05,008 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x00000230AF22EDA0>
+transport: <_ProactorSocketTransport fd=828 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:57:44,906 - ERROR - asyncio - Task exception was never retrieved
+future: <Task finished name='Task-6' coro=<Dispatcher._process_polling_updates() done, defined at D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py:407> exception=ConnectionError('Error 11001 connecting to redis:6379. 11001.')>
+Traceback (most recent call last):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 608, in connect
+    await self.retry.call_with_retry(
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\retry.py", line 59, in call_with_retry
+    return await do()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 645, in _connect
+    reader, writer = await asyncio.open_connection(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\streams.py", line 47, in open_connection
+    transport, _ = await loop.create_connection(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1025, in create_connection
+    infos = await self._ensure_resolved(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1404, in _ensure_resolved
+    return await loop.getaddrinfo(host, port, family=family, type=type,
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 860, in getaddrinfo
+    return await self.run_in_executor(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\socket.py", line 955, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 415, in _process_polling_updates
+    for responses in itertools.chain.from_iterable(await self.process_updates(updates, fast)):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 235, in process_updates
+    return await asyncio.gather(*tasks)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\handler.py", line 117, in notify
+    response = await handler_obj.handler(*args, **partial_data)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 256, in process_update
+    return await self.message_handlers.notify(update.message)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\handler.py", line 117, in notify
+    response = await handler_obj.handler(*args, **partial_data)
+  File "D:\PycharmProjects\mroyabot\web\app\handlers\common.py", line 23, in cmd_start
+    await reset_state(state)
+  File "D:\PycharmProjects\mroyabot\web\app\handlers\common.py", line 14, in reset_state
+    user_data = await state.get_data()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\storage.py", line 304, in get_data
+    return await self.storage.get_data(chat=self.chat, user=self.user, default=default)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\contrib\fsm_storage\redis.py", line 289, in get_data
+    raw_result = await self._redis.get(key)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\client.py", line 513, in execute_command
+    conn = self.connection or await pool.get_connection(command_name, **options)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 1413, in get_connection
+    await connection.connect()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 616, in connect
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 11001 connecting to redis:6379. 11001.
+2023-05-18 20:57:52,912 - ERROR - asyncio - Task exception was never retrieved
+future: <Task finished name='Task-9' coro=<Dispatcher._process_polling_updates() done, defined at D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py:407> exception=ConnectionError('Error 11001 connecting to redis:6379. 11001.')>
+Traceback (most recent call last):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 608, in connect
+    await self.retry.call_with_retry(
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\retry.py", line 59, in call_with_retry
+    return await do()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 645, in _connect
+    reader, writer = await asyncio.open_connection(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\streams.py", line 47, in open_connection
+    transport, _ = await loop.create_connection(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1025, in create_connection
+    infos = await self._ensure_resolved(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 1404, in _ensure_resolved
+    return await loop.getaddrinfo(host, port, family=family, type=type,
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\base_events.py", line 860, in getaddrinfo
+    return await self.run_in_executor(
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\socket.py", line 955, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 415, in _process_polling_updates
+    for responses in itertools.chain.from_iterable(await self.process_updates(updates, fast)):
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 235, in process_updates
+    return await asyncio.gather(*tasks)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\handler.py", line 117, in notify
+    response = await handler_obj.handler(*args, **partial_data)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\dispatcher.py", line 256, in process_update
+    return await self.message_handlers.notify(update.message)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\handler.py", line 117, in notify
+    response = await handler_obj.handler(*args, **partial_data)
+  File "D:\PycharmProjects\mroyabot\web\app\handlers\common.py", line 23, in cmd_start
+    await reset_state(state)
+  File "D:\PycharmProjects\mroyabot\web\app\handlers\common.py", line 14, in reset_state
+    user_data = await state.get_data()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\dispatcher\storage.py", line 304, in get_data
+    return await self.storage.get_data(chat=self.chat, user=self.user, default=default)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\aiogram\contrib\fsm_storage\redis.py", line 289, in get_data
+    raw_result = await self._redis.get(key)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\client.py", line 513, in execute_command
+    conn = self.connection or await pool.get_connection(command_name, **options)
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 1413, in get_connection
+    await connection.connect()
+  File "D:\PycharmProjects\mroyabot\venv\lib\site-packages\redis\asyncio\connection.py", line 616, in connect
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 11001 connecting to redis:6379. 11001.
+2023-05-18 20:58:10,881 - WARNING - aiogram.dispatcher.dispatcher - Polling is stopped.
+2023-05-18 20:58:10,944 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000002426B842050>
+2023-05-18 20:58:10,945 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x000002426B82AB00>, 459110.468)]']
+connector: <aiohttp.connector.TCPConnector object at 0x000002426B841F60>
+2023-05-18 20:58:10,945 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000002426B8424D0>
+transport: <_ProactorSocketTransport fd=572 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-05-18 20:59:33,660 - WARNING - aiogram.dispatcher.dispatcher - Polling is stopped.
+2023-05-18 20:59:33,717 - ERROR - asyncio - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x00000222ED4DCB20>
+2023-05-18 20:59:33,719 - ERROR - asyncio - Unclosed connector
+connections: ['[(<aiohttp.client_proto.ResponseHandler object at 0x00000222ED4FFCA0>, 459179.218)]']
+connector: <aiohttp.connector.TCPConnector object at 0x00000222ED4DCA30>
+2023-05-18 20:59:33,719 - ERROR - asyncio - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x00000222ED56DC00>
+transport: <_ProactorSocketTransport fd=852 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 361, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\Users\alset\AppData\Local\Programs\Python\Python310\lib\asyncio\proactor_events.py", line 397, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'

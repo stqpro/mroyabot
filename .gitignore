@@ -1,0 +1,7 @@
+/venv/
+/redis-data/
+/web/config/
+/log.txt
+/bot.db
+/.idea/
+__pycache__
