@@ -2,7 +2,7 @@ import logging
 import requests
 
 logger = logging.getLogger(__name__)
-base_url = 'http://znami.ru'
+base_url = 'https://prosta.by'
 
 
 def get_direction_name(city_1, city_2):

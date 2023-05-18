@@ -111,7 +111,7 @@ async def get_bot_stats(message: types.Message):
 
 
 async def default_handler(message: types.Message, state: FSMContext):
-    await message.answer('<b>Добро пожаловать в MROYABOT версии 3.1!</b> Переписанный с нуля, гораздо более быстрый, '
+    await message.answer('<b>Добро пожаловать в MROYABOT версии 3.1.3!</b> Переписанный с нуля, гораздо более быстрый, '
                          'функциональный и красивый бот снова готов искать места в маршрутках на самое удобное для '
                          'тебя время!\n\nПолное описание обновления можно прочитать в нашем '
                          '<a href="tg://resolve?domain=mroyabotinfo">блоге</a>. Возвращаемся в главное меню.',
