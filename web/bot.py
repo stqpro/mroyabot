@@ -2,8 +2,6 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.redis import RedisStorage2
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -12,6 +10,7 @@ from app.handlers.common import register_handlers_common, register_default_handl
 from app.handlers.trip_search import register_handlers_trip_search, register_commands_trip_search
 from app.handlers.cabinet import register_handlers_cabinet, register_commands_cabinet
 from app.utils.dbworker import check_trips, clear_trips, check_dates
+from config.storage import storage
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +48,6 @@ async def main():
     logger.info(config.telegram_bot.token)
 
     bot = Bot(token=config.telegram_bot.token, parse_mode='HTML')
-    storage = RedisStorage2(host="redis", db=0, prefix='mb')  # PRODUCTION
-    # storage = MemoryStorage() # DEBUG
     dp = Dispatcher(bot=bot, storage=storage)
 
     await set_commands(bot)
