@@ -2,10 +2,10 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 
-from app.handlers.trip_search import TripSearch, start_trip_search
-from app.handlers.cabinet import cabinet_start
-from app.utils.dbworker import get_user_trips, update_trip, get_stats, get_user_dates, delete_record
-from app.messages.formatter import parse_favourite, parse_favourite_date
+from ..handlers.trip_search import TripSearch, start_trip_search
+from ..handlers.cabinet import cabinet_start
+from ..utils.dbworker import get_user_trips, update_trip, get_stats, get_user_dates, delete_record
+from ..messages.formatter import parse_favourite, parse_favourite_date
 
 unfollow_cb = CallbackData('unfollow', 'id', 'confirm')
 

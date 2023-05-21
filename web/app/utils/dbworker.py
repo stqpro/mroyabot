@@ -2,8 +2,8 @@ from peewee import *
 
 from datetime import datetime
 
-from app.messages.formatter import parse_notification, parse_date_notification
-from app.utils.data_requests import get_trips
+from ..messages.formatter import parse_notification, parse_date_notification
+from ..utils.data_requests import get_trips
 
 database = SqliteDatabase('bot.db')
 

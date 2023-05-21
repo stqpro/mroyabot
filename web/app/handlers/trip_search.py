@@ -3,12 +3,12 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-from app.handlers.cabinet import get_token
-from app.utils.data_requests import get_directions, get_trips, create_reserve, get_stations, create_booking
-from app.utils.date_strings import *
-from app.messages.formatter import parse_trips_info
-from app.utils.actions import Action
-from app.utils.dbworker import create_trip, get_user_trips, update_trip, get_user_dates, create_user_date
+from .cabinet import get_token
+from ..utils.data_requests import get_directions, get_trips, create_reserve, get_stations, create_booking
+from ..utils.date_strings import *
+from ..messages.formatter import parse_trips_info
+from ..utils.actions import Action
+from ..utils.dbworker import create_trip, get_user_trips, update_trip, get_user_dates, create_user_date
 
 request_cb = CallbackData('do', 'action', 'departure', 'destination', 'date', 'time', 'id', 'places', sep='|')
 

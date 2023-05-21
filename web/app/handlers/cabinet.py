@@ -6,8 +6,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.callback_data import CallbackData
 
-from app.messages.formatter import parse_active, parse_archive
-from app.utils.data_requests import send_code, check_code, get_user, get_tickets, cancel_trip, update_last_name
+from ..messages.formatter import parse_active, parse_archive
+from ..utils.data_requests import send_code, check_code, get_user, get_tickets, cancel_trip, update_last_name
 
 cancel_cb = CallbackData('cancel', 'type', 'id', 'confirmed')
 

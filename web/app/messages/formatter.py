@@ -4,8 +4,8 @@ import logging
 from typing import Union, Dict, List
 from aiogram import types
 
-from app.utils.actions import Action
-from app.utils.date_strings import generate_readable_date
+from ..utils.actions import Action
+from ..utils.date_strings import generate_readable_date
 
 logger = logging.getLogger(__name__)
 
